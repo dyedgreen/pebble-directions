@@ -1,5 +1,7 @@
 #include <pebble.h>
+#include "colors.h"
 #include "select_window.h"
+#include "directions_window.h"
 
 #define COLOR_FIRST COLOR_CAR
 
@@ -9,18 +11,33 @@ static Window *window;
 static MenuLayer *transit_mode_menu;
 
 // Transit mode icons
-static GBitmap *icon_car;
+static GBitmap *icon_car_white;
 static GBitmap *icon_car_black;
-static GBitmap *icon_bike;
+static GBitmap *icon_bike_white;
 static GBitmap *icon_bike_black;
-static GBitmap *icon_train;
+static GBitmap *icon_train_white;
 static GBitmap *icon_train_black;
-static GBitmap *icon_walking;
-static GBitmap *icon_walking_black;
+static GBitmap *icon_walk_white;
+static GBitmap *icon_walk_black;
 
 // Callback for number of rows
-static uint16_t get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index, void *context) {
+static uint16_t get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *context) {
   return NUM_TRANSIT_METHODS;
+}
+
+static int16_t get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *context) {
+  // This part is for round watches only
+  #if defined(PBL_ROUND)
+    // Round
+    bool selected = menu_layer_is_index_selected(menu_layer, cell_index);
+    if (selected) {
+      return 69;
+    } else {
+      return 44;
+    }
+  #endif
+  // Square fallback
+  return 44;
 }
 
 // Draw menu cell callback
@@ -32,33 +49,33 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex 
     // Driving / Car
     case 0:
       if (highlighted) {
-        menu_cell_basic_draw(ctx, cell_layer, "Driving", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Driving", NULL, icon_car_white);
       } else {
-        menu_cell_basic_draw(ctx, cell_layer, "Driving", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Driving", NULL, icon_car_black);
       }
       break;
     // Riding the bike
     case 1:
       if (highlighted) {
-        menu_cell_basic_draw(ctx, cell_layer, "Cycling", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Cycling", NULL, icon_bike_white);
       } else {
-        menu_cell_basic_draw(ctx, cell_layer, "Cycling", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Cycling", NULL, icon_bike_black);
       }
       break;
     // Going by train / public transit
     case 2:
       if (highlighted) {
-        menu_cell_basic_draw(ctx, cell_layer, "Transit", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Transit", NULL, icon_train_white);
       } else {
-        menu_cell_basic_draw(ctx, cell_layer, "Transit", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Transit", NULL, icon_train_black);
       }
       break;
-    // Walking
+    // walk
     case 3:
       if (highlighted) {
-        menu_cell_basic_draw(ctx, cell_layer, "Walking", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Walk", NULL, icon_walk_white);
       } else {
-        menu_cell_basic_draw(ctx, cell_layer, "Walking", NULL, NULL);
+        menu_cell_basic_draw(ctx, cell_layer, "Walk", NULL, icon_walk_black);
       }
       break;
   }
@@ -80,9 +97,9 @@ static void selection_will_change_callback(struct MenuLayer *menu_layer, MenuInd
       case 2:
         menu_layer_set_highlight_colors(transit_mode_menu, COLOR_TRAIN, GColorWhite);
         break;
-      // Walking
+      // walk
       case 3:
-        menu_layer_set_highlight_colors(transit_mode_menu, COLOR_WALKING, GColorWhite);
+        menu_layer_set_highlight_colors(transit_mode_menu, COLOR_WALK, GColorWhite);
         break;
     }
   #endif
@@ -94,22 +111,23 @@ static void select_cell_callback(struct MenuLayer *menu_layer, MenuIndex *cell_i
   switch (cell_index->row) {
     // Driving / Car
     case 0:
-      printf("Car\n");
+      selected_type_enum = Car;
       break;
     // Riding the bike
     case 1:
-      printf("Bike\n");
+      selected_type_enum = Bike;
       break;
     // Going by train / public transit
     case 2:
-      printf("Train\n");
+      selected_type_enum = Train;
       break;
-    // Walking
+    // walk
     case 3:
-      printf("Walking\n");
+      selected_type_enum = Walk;
       break;
   }
-  // Open the speak stuff...
+  // Open the directions window
+  directions_window_push();
 }
 
 // Window unload handler
@@ -118,14 +136,14 @@ static void window_unload() {
   menu_layer_destroy(transit_mode_menu);
 
   // Destroy all images
-  gbitmap_destroy(icon_car);
+  gbitmap_destroy(icon_car_white);
   gbitmap_destroy(icon_car_black);
-  gbitmap_destroy(icon_bike);
+  gbitmap_destroy(icon_bike_white);
   gbitmap_destroy(icon_bike_black);
-  gbitmap_destroy(icon_train);
+  gbitmap_destroy(icon_train_white);
   gbitmap_destroy(icon_train_black);
-  gbitmap_destroy(icon_walking);
-  gbitmap_destroy(icon_walking_black);
+  gbitmap_destroy(icon_walk_white);
+  gbitmap_destroy(icon_walk_black);
 
   // Destroy the window
   window_destroy(window);
@@ -149,6 +167,7 @@ static void window_load() {
   // Define menu callbacks
   menu_layer_set_callbacks(transit_mode_menu, NULL, (MenuLayerCallbacks) {
     .get_num_rows = get_num_rows_callback,
+    .get_cell_height = get_cell_height_callback,
     .draw_row = draw_row_callback,
     .select_click = select_cell_callback,
     .selection_will_change = selection_will_change_callback,
@@ -158,14 +177,14 @@ static void window_load() {
   layer_add_child(window_layer, menu_layer_get_layer(transit_mode_menu));
 
   // Load the icon images
-  /*icon_car = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_WHITE);
+  icon_car_white = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_WHITE);
   icon_car_black = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_BLACK);
-  icon_bike = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_WHITE);
-  icon_bike_black = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_BLACK);
-  icon_train = gbitmap_create_with_resource(RESOURCE_ID_ICON_TRAIN_WHITE);
+  icon_bike_white = gbitmap_create_with_resource(RESOURCE_ID_ICON_BIKE_WHITE);
+  icon_bike_black = gbitmap_create_with_resource(RESOURCE_ID_ICON_BIKE_BLACK);
+  icon_train_white = gbitmap_create_with_resource(RESOURCE_ID_ICON_TRAIN_WHITE);
   icon_train_black = gbitmap_create_with_resource(RESOURCE_ID_ICON_TRAIN_BLACK);
-  icon_walking = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_WHITE);
-  icon_walking_black = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_BLACK);*/
+  icon_walk_white = gbitmap_create_with_resource(RESOURCE_ID_ICON_WALK_WHITE);
+  icon_walk_black = gbitmap_create_with_resource(RESOURCE_ID_ICON_WALK_BLACK);
 }
 
 // Push the window to the window stack

@@ -11,18 +11,74 @@
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "aplite",
       "basalt",
       "chalk"
+    ],
+    "capabilities": [
+      "location"
     ],
     "watchapp": {
       "watchface": false
     },
     "messageKeys": [
-      "dummy"
+      "SEARCH",
+      "SUCCESS",
+      "DISTANCE",
+      "TIME",
+      "STEPS",
+      "STEPS_DISTANCES"
     ],
     "resources": {
-      "media": []
+      "media": [
+        {
+          "file": "images/car_black.png",
+          "name": "ICON_CAR_BLACK",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/car_white.png",
+          "name": "ICON_CAR_WHITE",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/train_black.png",
+          "name": "ICON_TRAIN_BLACK",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/train_white.png",
+          "name": "ICON_TRAIN_WHITE",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/bike_black.png",
+          "name": "ICON_BIKE_BLACK",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/bike_white.png",
+          "name": "ICON_BIKE_WHITE",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/walk_black.png",
+          "name": "ICON_WALK_BLACK",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/walk_white.png",
+          "name": "ICON_WALK_WHITE",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        }
+      ]
     }
   }
 }
