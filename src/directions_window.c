@@ -7,6 +7,18 @@
 #define MAX_STEP_COUNT 20
 #define MAX_STEP_CHARS 128
 
+// The RouteData struct
+struct RouteData {
+  // App message state TODO: Is this necessary?
+  bool ready;
+  bool callback;
+  // Data fields
+  int distance;
+  int time;
+  char steps[MAX_STEP_COUNT][MAX_STEP_CHARS];
+  int count;
+};
+
 // The main window
 static Window *window;
 static int window_height;
@@ -18,12 +30,7 @@ static DictationSession *dictation_session;
 static char *address;
 
 // TODO: implement a timer, that kills the proccess if the message is never send (needed?)
-static bool AppMessageIsReady;
-static bool AppMessageSendOnCallback;
-static int RouteDataDistance;
-static int RouteDataTime;
-static char RouteDataSteps[MAX_STEP_COUNT][MAX_STEP_CHARS];
-static int RouteDataStepsCount;
+struct RouteData *route_data;
 
 // Function declarations
 static void app_message_send_search_data();
@@ -93,7 +100,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     app_message_send_search_data();
   } else {
     // Dictation failed, remove this window
-    window_stack_remove(window, true);
+    window_stack_remove(window, false);
   }
 }
 
@@ -111,9 +118,9 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
   message = dict_find(iter, MESSAGE_KEY_READY);
   if (message) {
     // Set status to ready
-    AppMessageIsReady = (bool)message->value->int16;
+    route_data->ready = (bool)message->value->int16;
     // Send pending search data
-    if (AppMessageSendOnCallback) {
+    if (route_data->callback) {
       app_message_send_search_data();
     }
   }
@@ -144,25 +151,24 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
   // Test if the recived message is for key DISTANCE
   message = dict_find(iter, MESSAGE_KEY_DISTANCE);
   if (message) {
-    RouteDataDistance = (int)message->value->int32;
+    route_data->distance = (int)message->value->int32;
   }
 
   // Test if the recived message is for key TIME
   message = dict_find(iter, MESSAGE_KEY_TIME);
   if (message) {
-    RouteDataTime = (int)message->value->int32;
+    route_data->time = (int)message->value->int32;
   }
 
   // Test if the recived message is for key INSTRUCTIONS
   for (int i = 0; i < MAX_STEP_COUNT; i++) {
     message = dict_find(iter, MESSAGE_KEY_INSTRUCTIONS + i);
     if (message) {
-      // Copy the string into the string array
-      static char *empty;
-      strncat(empty, message->value->cstring, MAX_STEP_CHARS);
-      strcpy(RouteDataSteps[i], empty);
+      // Copy the string into the string array FIXME
+      strcpy(route_data->steps[i], message->value->cstring);
+      route_data->steps[i][MAX_STEP_CHARS] = '\n';
       // Store the new length of the RouteDataSteps
-      RouteDataStepsCount = i + 1;
+      route_data->count = i + 1;
     }
   }
 }
@@ -182,14 +188,12 @@ static void app_message_outbox_failed_callback(DictionaryIterator *iter, AppMess
 // Send the search data to the phone
 static void app_message_send_search_data() {
   // Send the data to the phone if conn is ready
-  if (AppMessageIsReady) {
+  if (route_data->ready) {
     // Create a string with the correct length
     char message[sizeof(address) + 1];
-    // Add the type as the first char
-    message[0] = '0' + selected_type_enum;
-    // Add the address
-    strcat(message, address);
-    // Make sure the string is terminated correctely, just in case
+    // Format the string FIXME (cuts of after 'mee' for the test string ???)
+    snprintf(message, sizeof(message), "%i%s", selected_type_enum, address);
+    // Make sure the string is terminated correctely (just in case)
     message[sizeof(message) - 1] = '\n';
 
     // Write string to bluetooth storage
@@ -203,21 +207,31 @@ static void app_message_send_search_data() {
       window_display_error(Network);
     }
   } else {
-    AppMessageSendOnCallback = true;
+    route_data->callback = true;
   }
 }
 
 // Set up the whole app message thing (once the address is worked out)
 static void app_message_start() {
+  // Set up the data
+  route_data = malloc(sizeof(struct RouteData));
+
   // Set initial values
-  AppMessageIsReady = true;
-  AppMessageSendOnCallback = false;
+  route_data->ready = true;
+  route_data->callback = false;
   // Register all callbacks
   app_message_register_inbox_received(app_message_inbox_recived_callback);
   app_message_register_inbox_dropped(app_message_inbox_dropped_callback);
   app_message_register_outbox_failed(app_message_outbox_failed_callback);
   // Open the app-message
   app_message_open(APP_MESSAGE_INBOX_SIZE_MINIMUM, APP_MESSAGE_OUTBOX_SIZE_MINIMUM);
+}
+
+static void app_message_destroy_resources() {
+  // Remove all app message callbacks
+  app_message_deregister_callbacks();
+  // Clear the data
+  free(route_data);
 }
 
 
@@ -241,8 +255,9 @@ static void window_unload() {
   // Destroy the dictation session
   dictation_session_destroy(dictation_session);
 
-  // Remove all app message callbacks
-  app_message_deregister_callbacks();
+  // Destroy app message stuff
+  app_message_destroy_resources();
+  route_data = NULL;
 
   // Destroy the window
   window_destroy(window);

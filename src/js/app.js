@@ -74,6 +74,7 @@ function sendRoute(success, distance, time, stepList) {
     // Build message
     var keyDistance = keys.DISTANCE;
     var keyTime = keys.TIME;
+    var dict = {};
     dict[keyDistance] = +distance;
     dict[keyTime] = +time;
 
