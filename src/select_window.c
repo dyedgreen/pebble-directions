@@ -27,7 +27,7 @@ static uint16_t get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t sec
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *context) {
   // This part is for round watches only
-  #if defined(PBL_ROUND)
+  #ifdef PBL_ROUND
     // Round
     bool selected = menu_layer_is_index_selected(menu_layer, cell_index);
     if (selected) {

@@ -18,15 +18,17 @@
       "location"
     ],
     "watchapp": {
-      "watchface": false
+      "watchface": false,
+      "hiddenApp": false,
+      "onlyShownOnCommunication": false
     },
     "messageKeys": [
+      "READY",
       "SEARCH",
       "SUCCESS",
       "DISTANCE",
       "TIME",
-      "STEPS",
-      "STEPS_DISTANCES"
+      "INSTRUCTIONS[20]"
     ],
     "resources": {
       "media": [
@@ -75,6 +77,24 @@
         {
           "file": "images/walk_white.png",
           "name": "ICON_WALK_WHITE",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/error_network.png",
+          "name": "ICON_ERROR_NETWORK",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/error_api.png",
+          "name": "ICON_ERROR_API",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/error_other.png",
+          "name": "ICON_ERROR_OTHER",
           "targetPlatforms": null,
           "type": "bitmap"
         }

@@ -1,11 +1,11 @@
 #include <pebble.h>
 #include "colors.h"
-#include "directions_window.h"
-
-#include <pebble.h>
-#include "colors.h"
 #include "select_window.h"
 #include "directions_window.h"
+#include "error_window.h"
+
+#define MAX_STEP_COUNT 20
+#define MAX_STEP_CHARS 128
 
 // The main window
 static Window *window;
@@ -16,6 +16,18 @@ static GColor selected_type_color;
 
 static DictationSession *dictation_session;
 static char *address;
+
+// TODO: implement a timer, that kills the proccess if the message is never send (needed?)
+static bool AppMessageIsReady;
+static bool AppMessageSendOnCallback;
+static int RouteDataDistance;
+static int RouteDataTime;
+static char RouteDataSteps[MAX_STEP_COUNT][MAX_STEP_CHARS];
+static int RouteDataStepsCount;
+
+// Function declarations
+static void app_message_send_search_data();
+void window_display_error(enum ErrorType err);
 
 
 // ******************************
@@ -51,6 +63,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex 
   }
 }
 
+// FIXME: Will probably not be necessary later!
 static void selection_will_change_callback(struct MenuLayer *menu_layer, MenuIndex *new_index, MenuIndex old_index, void *context) {
   // Change the highlight color
   #ifdef PBL_COLOR
@@ -62,7 +75,6 @@ static void selection_will_change_callback(struct MenuLayer *menu_layer, MenuInd
       // All other cells
       default:
         menu_layer_set_highlight_colors(directions_list, GColorWhite, selected_type_color);
-        break;
     }
   #endif
 }
@@ -77,21 +89,149 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
   if (status == DictationSessionStatusSuccess) {
     // Store the address and load a route
     address = transcript;
-    // TODO load route data
+    // Send the search data
+    app_message_send_search_data();
   } else {
-    // TODO display proper error window
+    // Dictation failed, remove this window
     window_stack_remove(window, true);
   }
 }
 
 
-// ******************
-// * APP SYNC STUFF *
-// ******************
+// *********************
+// * APP MESSAGE STUFF *
+// *********************
+
+// Accept data from the watch
+static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *context) {
+  // Test all possible message types
+  Tuple *message;
+
+  // Test if the recived message is for key READY
+  message = dict_find(iter, MESSAGE_KEY_READY);
+  if (message) {
+    // Set status to ready
+    AppMessageIsReady = (bool)message->value->int16;
+    // Send pending search data
+    if (AppMessageSendOnCallback) {
+      app_message_send_search_data();
+    }
+  }
+
+  // Test if the recived message is for key SUCCESS
+  message = dict_find(iter, MESSAGE_KEY_SUCCESS);
+  if (message) {
+    // Respond with the correct UI
+    switch ((int)message->value->int32) {
+      // Success
+      case 0:
+        // TODO: update the ui in some way
+        window_display_error(Other);
+        break;
+      // Route not found / api error
+      case 1:
+        window_display_error(Api);
+        break;
+      // Too many steps (== route not found error)
+      case 2:
+        window_display_error(Api);
+        break;
+      default:
+        window_display_error(Other);
+    }
+  }
+
+  // Test if the recived message is for key DISTANCE
+  message = dict_find(iter, MESSAGE_KEY_DISTANCE);
+  if (message) {
+    RouteDataDistance = (int)message->value->int32;
+  }
+
+  // Test if the recived message is for key TIME
+  message = dict_find(iter, MESSAGE_KEY_TIME);
+  if (message) {
+    RouteDataTime = (int)message->value->int32;
+  }
+
+  // Test if the recived message is for key INSTRUCTIONS
+  for (int i = 0; i < MAX_STEP_COUNT; i++) {
+    message = dict_find(iter, MESSAGE_KEY_INSTRUCTIONS + i);
+    if (message) {
+      // Copy the string into the string array
+      static char *empty;
+      strncat(empty, message->value->cstring, MAX_STEP_CHARS);
+      strcpy(RouteDataSteps[i], empty);
+      // Store the new length of the RouteDataSteps
+      RouteDataStepsCount = i + 1;
+    }
+  }
+}
+
+// Respond with error, if any data is lost
+static void app_message_inbox_dropped_callback(AppMessageResult reason, void *context) {
+  // Display the network error
+  window_display_error(Network);
+}
+
+// Respond with error, if data can not be send to watch
+static void app_message_outbox_failed_callback(DictionaryIterator *iter, AppMessageResult reason, void *context) {
+  // Display the network error
+  window_display_error(Network);
+}
+
+// Send the search data to the phone
+static void app_message_send_search_data() {
+  // Send the data to the phone if conn is ready
+  if (AppMessageIsReady) {
+    // Create a string with the correct length
+    char message[sizeof(address) + 1];
+    // Add the type as the first char
+    message[0] = '0' + selected_type_enum;
+    // Add the address
+    strcat(message, address);
+    // Make sure the string is terminated correctely, just in case
+    message[sizeof(message) - 1] = '\n';
+
+    // Write string to bluetooth storage
+    DictionaryIterator *iter;
+    if (app_message_outbox_begin(&iter) == APP_MSG_OK) {
+      dict_write_cstring(iter, MESSAGE_KEY_SEARCH, message);
+      // Send the outbox
+      app_message_outbox_send();
+    } else {
+      // Display network error
+      window_display_error(Network);
+    }
+  } else {
+    AppMessageSendOnCallback = true;
+  }
+}
+
+// Set up the whole app message thing (once the address is worked out)
+static void app_message_start() {
+  // Set initial values
+  AppMessageIsReady = true;
+  AppMessageSendOnCallback = false;
+  // Register all callbacks
+  app_message_register_inbox_received(app_message_inbox_recived_callback);
+  app_message_register_inbox_dropped(app_message_inbox_dropped_callback);
+  app_message_register_outbox_failed(app_message_outbox_failed_callback);
+  // Open the app-message
+  app_message_open(APP_MESSAGE_INBOX_SIZE_MINIMUM, APP_MESSAGE_OUTBOX_SIZE_MINIMUM);
+}
+
 
 // ********************
 // * WINDOW LIFECYCLE *
 // ********************
+
+// Network error callback
+void window_display_error(enum ErrorType err) {
+  // Show the error window
+  error_window_push(err);
+  // Remove this window from the window stack
+  window_stack_remove(window, false);
+}
 
 // Window unload handler
 static void window_unload() {
@@ -100,6 +240,9 @@ static void window_unload() {
 
   // Destroy the dictation session
   dictation_session_destroy(dictation_session);
+
+  // Remove all app message callbacks
+  app_message_deregister_callbacks();
 
   // Destroy the window
   window_destroy(window);
@@ -175,4 +318,9 @@ void directions_window_push() {
   // Start the dictation session TODO: Change this, once app sync stuff is working
   // dictation_session_start(dictation_session);
   address = "Meerbusch Brockhofweg 9"; // WIP address string
+
+  // Open the connection to the phone
+  app_message_start();
+  // TODO: Remove this for final version; this is a playeholder implementation (skipping the dictation)
+  app_message_send_search_data();
 }
