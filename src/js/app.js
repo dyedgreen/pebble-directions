@@ -101,7 +101,7 @@ function fetchAndSendRoute(routeType, destination) {
   setTimeout(function() {
     // Some dummy loading time
     sendRoute(true, 560, 16, ['This is the first step', 'This is the second step', 'This is the third step', 'This is the final step']);
-  }, 2000);
+  }, 10000);
 }
 
 // Accept data from the pebble watch

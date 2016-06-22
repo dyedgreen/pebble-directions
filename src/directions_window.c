@@ -203,12 +203,12 @@ static void app_message_send_search_data() {
       dict_write_cstring(iter, MESSAGE_KEY_SEARCH, message);
       // Send the outbox
       app_message_outbox_send();
+      // Display loading anim window
+      loading_window_push();
     } else {
       // Display network error
       window_display_error(Network);
     }
-    // Display loading anim window
-    // TODO: implement this
   } else {
     route_data->callback = true;
   }
@@ -247,6 +247,8 @@ static void app_message_destroy_resources() {
 
 // Network error callback
 void window_display_error(enum ErrorType err) {
+  // Remove the loading window
+  loading_window_finish();
   // Show the error window
   error_window_push(err);
   // Remove this window from the window stack
@@ -263,7 +265,7 @@ static void window_update_data() {
   #endif
   menu_layer_reload_data(directions_list);
   // Hide the loading view
-  // TODO: loading will be hidden here
+  loading_window_finish();
 }
 
 // Window unload handler
