@@ -3,13 +3,14 @@
 #include "select_window.h"
 #include "directions_window.h"
 #include "error_window.h"
+#include "loading_window.h"
 
 #define MAX_STEP_COUNT 20
 #define MAX_STEP_CHARS 128
 
 // The RouteData struct
 struct RouteData {
-  // App message state TODO: Is this necessary?
+  // App message state TODO: Is this necessary? (-> probably not!)
   bool ready;
   bool callback;
   // Data fields
@@ -35,6 +36,7 @@ struct RouteData *route_data;
 // Function declarations
 static void app_message_send_search_data();
 void window_display_error(enum ErrorType err);
+static void window_update_data();
 
 
 // ******************************
@@ -43,12 +45,12 @@ void window_display_error(enum ErrorType err);
 
 // Callback for number of rows
 static uint16_t get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *context) {
-  return 3;
+  return route_data != NULL ? route_data->count + 1 : 0;
 }
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *context) {
   // This part is for round watches only
-  #if defined(PBL_ROUND)
+  #ifdef PBL_ROUND
     // Round
     return window_height;
   #endif
@@ -58,7 +60,7 @@ static int16_t get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex 
 
 // Draw menu cell callback TODO: use a custom ui
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *context) {
-  // Determine what row to draw
+  // Determine what row to draw TODO: implement nicer UI
   switch (cell_index->row) {
     // Summary
     case 0:
@@ -66,7 +68,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex 
       break;
     // Step description
     default:
-      menu_cell_basic_draw(ctx, cell_layer, address, "30 m", NULL);
+      menu_cell_basic_draw(ctx, cell_layer, route_data->steps[cell_index->row - 1], "sub title", NULL);
   }
 }
 
@@ -132,8 +134,7 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
     switch ((int)message->value->int32) {
       // Success
       case 0:
-        // TODO: update the ui in some way
-        window_display_error(Other);
+        window_update_data();
         break;
       // Route not found / api error
       case 1:
@@ -166,7 +167,7 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
     if (message) {
       // Copy the string into the string array FIXME
       strcpy(route_data->steps[i], message->value->cstring);
-      route_data->steps[i][MAX_STEP_CHARS] = '\n';
+      route_data->steps[i][MAX_STEP_CHARS - 1] = '\0';
       // Store the new length of the RouteDataSteps
       route_data->count = i + 1;
     }
@@ -194,7 +195,7 @@ static void app_message_send_search_data() {
     // Format the string FIXME (cuts of after 'mee' for the test string ???)
     snprintf(message, sizeof(message), "%i%s", selected_type_enum, address);
     // Make sure the string is terminated correctely (just in case)
-    message[sizeof(message) - 1] = '\n';
+    message[sizeof(message) - 1] = '\0';
 
     // Write string to bluetooth storage
     DictionaryIterator *iter;
@@ -206,6 +207,8 @@ static void app_message_send_search_data() {
       // Display network error
       window_display_error(Network);
     }
+    // Display loading anim window
+    // TODO: implement this
   } else {
     route_data->callback = true;
   }
@@ -219,6 +222,9 @@ static void app_message_start() {
   // Set initial values
   route_data->ready = true;
   route_data->callback = false;
+  route_data->distance = 0;
+  route_data->time = 0;
+  route_data->count = 0;
   // Register all callbacks
   app_message_register_inbox_received(app_message_inbox_recived_callback);
   app_message_register_inbox_dropped(app_message_inbox_dropped_callback);
@@ -245,6 +251,19 @@ void window_display_error(enum ErrorType err) {
   error_window_push(err);
   // Remove this window from the window stack
   window_stack_remove(window, false);
+}
+
+// Update the data in the window
+static void window_update_data() {
+  // Update the menu layer
+  #ifdef PBL_ROUND
+    menu_layer_set_selected_index(directions_list, (MenuIndex){ .section = 0, .row = 0 }, MenuRowAlignCenter, false);
+  #else
+    menu_layer_set_selected_index(directions_list, (MenuIndex){ .section = 0, .row = 0 }, MenuRowAlignTop, false);
+  #endif
+  menu_layer_reload_data(directions_list);
+  // Hide the loading view
+  // TODO: loading will be hidden here
 }
 
 // Window unload handler
