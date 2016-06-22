@@ -2,6 +2,7 @@
 #include "loading_window.h"
 
 // TODO: Tidy this! (will do later)
+// TODO: disconnect loading / display window to make things work better soon! (or move the 'loading window' to a 'loading layer'...)
 // Some stuff added by me
 static bool will_close;
 

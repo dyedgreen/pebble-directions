@@ -31,6 +31,7 @@ static DictationSession *dictation_session;
 static char *address;
 
 // TODO: implement a timer, that kills the proccess if the message is never send (needed?)
+// TODO: implement the loading window as a layer instead
 struct RouteData *route_data;
 
 // Function declarations
@@ -190,12 +191,13 @@ static void app_message_outbox_failed_callback(DictionaryIterator *iter, AppMess
 static void app_message_send_search_data() {
   // Send the data to the phone if conn is ready
   if (route_data->ready) {
-    // Create a string with the correct length
-    char message[sizeof(address) + 1];
+    // Create a string with the correct length (len is the length w/o the '/0' char)
+    const int len = strlen(address) + 1;
+    char message[len + 1];
     // Format the string FIXME (cuts of after 'mee' for the test string ???)
     snprintf(message, sizeof(message), "%i%s", selected_type_enum, address);
     // Make sure the string is terminated correctely (just in case)
-    message[sizeof(message) - 1] = '\0';
+    message[len] = '\0';
 
     // Write string to bluetooth storage
     DictionaryIterator *iter;
@@ -220,7 +222,7 @@ static void app_message_start() {
   route_data = malloc(sizeof(struct RouteData));
 
   // Set initial values
-  route_data->ready = true;
+  route_data->ready = true; /*skip ready check*/
   route_data->callback = false;
   route_data->distance = 0;
   route_data->time = 0;
