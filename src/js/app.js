@@ -81,7 +81,11 @@ function sendRoute(success, distance, time, stepList) {
     // Transmit
     Pebble.sendAppMessage(dict, function() {
       // Success!
-      sendStepItem(stepList, 0);
+      setTimeout(function() {
+        // Some dummy loading time
+        sendStepItem(stepList, 0);
+      }, 3000);
+      //sendStepItem(stepList, 0);
     }, function() {
       // Error
       console.log('Transmission failed at [OVERVIEW]');
@@ -100,8 +104,8 @@ function fetchAndSendRoute(routeType, destination) {
   /* dummy data: */
   setTimeout(function() {
     // Some dummy loading time
-    sendRoute(true, 560, 16, ['This is the first step', 'This is the second step', 'This is the third step', 'This is the final step']);
-  }, 10000);
+    sendRoute(true, 560, 16, ['This is the first step', 'This is the second step', 'This is the third step', 'This is the final step', destination]);
+  }, 3000);
 }
 
 // Accept data from the pebble watch

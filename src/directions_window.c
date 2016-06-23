@@ -3,10 +3,17 @@
 #include "select_window.h"
 #include "directions_window.h"
 #include "error_window.h"
-#include "loading_window.h"
+#include "progress_layer.h"
 
 #define MAX_STEP_COUNT 20
 #define MAX_STEP_CHARS 128
+
+// Progress display vals
+#define PROGRESS_SEARCH_SEND 50
+#define PROGRESS_DISTANCE_RECIVED 80
+#define PROGRESS_TIME_RECIVED PROGRESS_DISTANCE_RECIVED
+#define PROGRESS_STEP_RECIVED 95
+#define PROGRESS_SUCCESS_RECIVED 100
 
 // The RouteData struct
 struct RouteData {
@@ -30,9 +37,9 @@ static GColor selected_type_color;
 static DictationSession *dictation_session;
 static char *address;
 
-// TODO: implement a timer, that kills the proccess if the message is never send (needed?)
-// TODO: implement the loading window as a layer instead
+// TODO: Maybe implement a timeout later
 struct RouteData *route_data;
+ProgressLayer *progress_layer;
 
 // Function declarations
 static void app_message_send_search_data();
@@ -65,6 +72,8 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex 
   switch (cell_index->row) {
     // Summary
     case 0:
+      // Store the display text
+
       menu_cell_basic_draw(ctx, cell_layer, "11 min", "600 m", NULL);
       break;
     // Step description
@@ -112,7 +121,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
 // * APP MESSAGE STUFF *
 // *********************
 
-// Accept data from the watch
+// Accept data from the watch (will also move to the correct progress indications)
 static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *context) {
   // Test all possible message types
   Tuple *message;
@@ -131,6 +140,8 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
   // Test if the recived message is for key SUCCESS
   message = dict_find(iter, MESSAGE_KEY_SUCCESS);
   if (message) {
+    // Set the progress
+    progress_layer_set_progress(progress_layer, PROGRESS_SUCCESS_RECIVED, true);
     // Respond with the correct UI
     switch ((int)message->value->int32) {
       // Success
@@ -153,12 +164,16 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
   // Test if the recived message is for key DISTANCE
   message = dict_find(iter, MESSAGE_KEY_DISTANCE);
   if (message) {
+    // Set the progress
+    progress_layer_set_progress(progress_layer, PROGRESS_DISTANCE_RECIVED, true);
     route_data->distance = (int)message->value->int32;
   }
 
   // Test if the recived message is for key TIME
   message = dict_find(iter, MESSAGE_KEY_TIME);
   if (message) {
+    // Set the progress
+    progress_layer_set_progress(progress_layer, PROGRESS_TIME_RECIVED, true);
     route_data->time = (int)message->value->int32;
   }
 
@@ -166,6 +181,8 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
   for (int i = 0; i < MAX_STEP_COUNT; i++) {
     message = dict_find(iter, MESSAGE_KEY_INSTRUCTIONS + i);
     if (message) {
+      // Set the progress
+      progress_layer_set_progress(progress_layer, PROGRESS_STEP_RECIVED, true);
       // Copy the string into the string array FIXME
       strcpy(route_data->steps[i], message->value->cstring);
       route_data->steps[i][MAX_STEP_CHARS - 1] = '\0';
@@ -187,8 +204,16 @@ static void app_message_outbox_failed_callback(DictionaryIterator *iter, AppMess
   window_display_error(Network);
 }
 
+static void app_message_outbox_sent_callback(DictionaryIterator *iter, void *context) {
+  // Display the progress
+  progress_layer_set_progress(progress_layer, PROGRESS_SEARCH_SEND, true);
+}
+
 // Send the search data to the phone
 static void app_message_send_search_data() {
+  // Display the progress view
+  progress_layer_set_progress(progress_layer, 0, false);
+  progress_layer_present(window, progress_layer);
   // Send the data to the phone if conn is ready
   if (route_data->ready) {
     // Create a string with the correct length (len is the length w/o the '/0' char)
@@ -205,8 +230,6 @@ static void app_message_send_search_data() {
       dict_write_cstring(iter, MESSAGE_KEY_SEARCH, message);
       // Send the outbox
       app_message_outbox_send();
-      // Display loading anim window
-      loading_window_push();
     } else {
       // Display network error
       window_display_error(Network);
@@ -231,11 +254,12 @@ static void app_message_start() {
   app_message_register_inbox_received(app_message_inbox_recived_callback);
   app_message_register_inbox_dropped(app_message_inbox_dropped_callback);
   app_message_register_outbox_failed(app_message_outbox_failed_callback);
+  app_message_register_outbox_sent(app_message_outbox_sent_callback);
   // Open the app-message
   app_message_open(APP_MESSAGE_INBOX_SIZE_MINIMUM, APP_MESSAGE_OUTBOX_SIZE_MINIMUM);
 }
 
-static void app_message_destroy_resources() {
+static void app_message_resources_destroy() {
   // Remove all app message callbacks
   app_message_deregister_callbacks();
   // Clear the data
@@ -249,8 +273,6 @@ static void app_message_destroy_resources() {
 
 // Network error callback
 void window_display_error(enum ErrorType err) {
-  // Remove the loading window
-  loading_window_finish();
   // Show the error window
   error_window_push(err);
   // Remove this window from the window stack
@@ -266,25 +288,35 @@ static void window_update_data() {
     menu_layer_set_selected_index(directions_list, (MenuIndex){ .section = 0, .row = 0 }, MenuRowAlignTop, false);
   #endif
   menu_layer_reload_data(directions_list);
-  // Hide the loading view
-  loading_window_finish();
+  // Hide the progress layer
+  progress_layer_remove(progress_layer);
 }
 
 // Window unload handler
 static void window_unload() {
   // Destroy the menu layer
   menu_layer_destroy(directions_list);
+  directions_list = NULL;
+
+  // Destroy the progress layer
+  progress_layer_destroy(progress_layer);
+  progress_layer = NULL;
 
   // Destroy the dictation session
   dictation_session_destroy(dictation_session);
 
   // Destroy app message stuff
-  app_message_destroy_resources();
+  app_message_resources_destroy();
   route_data = NULL;
 
   // Destroy the window
   window_destroy(window);
   window = NULL;
+}
+
+static void window_disappear() {
+  // Remove the progress layer
+  progress_layer_remove(progress_layer);
 }
 
 // Window load stuff
@@ -335,6 +367,9 @@ static void window_load() {
 
   // Add the menu layer to the window
   layer_add_child(window_layer, menu_layer_get_layer(directions_list));
+
+  // Create the progress layer
+  progress_layer = progress_layer_create(bounds);
 }
 
 // Push the window to the window stack
@@ -347,6 +382,7 @@ void directions_window_push() {
     window_set_window_handlers(window, (WindowHandlers) {
       .load = window_load,
       .unload = window_unload,
+      .disappear = window_disappear,
     });
   }
 
