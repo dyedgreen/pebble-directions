@@ -1,7 +1,5 @@
-#include <pebble.h>
-#include "colors.h"
 #include "select_window.h"
-#include "directions_window.h"
+
 
 #define COLOR_FIRST COLOR_CAR
 

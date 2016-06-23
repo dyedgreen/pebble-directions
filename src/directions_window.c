@@ -1,9 +1,5 @@
-#include <pebble.h>
-#include "colors.h"
-#include "select_window.h"
 #include "directions_window.h"
-#include "error_window.h"
-#include "progress_layer.h"
+
 
 #define MAX_STEP_COUNT 20
 #define MAX_STEP_CHARS 128
@@ -57,45 +53,21 @@ static uint16_t get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t sec
 }
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *context) {
-  // This part is for round watches only
-  #ifdef PBL_ROUND
-    // Round
-    return window_height;
-  #endif
-  // Square fallback
-  return window_height / 2;
+  return directions_get_cell_height(window_height, cell_index->row);
 }
 
-// Draw menu cell callback TODO: use a custom ui
+// Draw menu cell callback
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *context) {
   // Determine what row to draw TODO: implement nicer UI
   switch (cell_index->row) {
     // Summary
     case 0:
-      // Store the display text
-
-      menu_cell_basic_draw(ctx, cell_layer, "11 min", "600 m", NULL);
+      directions_draw_summary(ctx, layer_get_bounds(cell_layer), selected_type_color, route_data->distance, route_data->time);
       break;
     // Step description
     default:
-      menu_cell_basic_draw(ctx, cell_layer, route_data->steps[cell_index->row - 1], "sub title", NULL);
+      directions_draw_step(ctx, layer_get_bounds(cell_layer), selected_type_color, route_data->steps[cell_index->row - 1], cell_index->row - 1, (int16_t)route_data->count);
   }
-}
-
-// FIXME: Will probably not be necessary later!
-static void selection_will_change_callback(struct MenuLayer *menu_layer, MenuIndex *new_index, MenuIndex old_index, void *context) {
-  // Change the highlight color
-  #ifdef PBL_COLOR
-    switch (new_index->row) {
-      // Initial summary
-      case 0:
-        menu_layer_set_highlight_colors(directions_list, selected_type_color, GColorWhite);
-        break;
-      // All other cells
-      default:
-        menu_layer_set_highlight_colors(directions_list, GColorWhite, selected_type_color);
-    }
-  #endif
 }
 
 
@@ -352,17 +324,13 @@ static void window_load() {
   directions_list = menu_layer_create(bounds);
   // Set the click event handles to the correct window
   menu_layer_set_click_config_onto_window(directions_list, window);
-  // If color, set the starting highlighted color
-  #ifdef PBL_COLOR
-    menu_layer_set_highlight_colors(directions_list, selected_type_color, GColorWhite);
-  #endif
+  menu_layer_set_highlight_colors(directions_list, GColorWhite, GColorBlack);
 
   // Define menu callbacks
   menu_layer_set_callbacks(directions_list, NULL, (MenuLayerCallbacks) {
     .get_num_rows = get_num_rows_callback,
     .get_cell_height = get_cell_height_callback,
     .draw_row = draw_row_callback,
-    .selection_will_change = selection_will_change_callback,
   });
 
   // Add the menu layer to the window
@@ -390,7 +358,7 @@ void directions_window_push() {
   window_stack_push(window, true);
 
   // Start the dictation session TODO: Change this, once app sync stuff is working
-  // dictation_session_start(dictation_session);
+  //dictation_session_start(dictation_session);
   address = "Meerbusch Brockhofweg 9"; // WIP address string
 
   // Open the connection to the phone

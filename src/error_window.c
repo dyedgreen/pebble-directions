@@ -1,6 +1,5 @@
-#include <pebble.h>
-#include "colors.h"
 #include "error_window.h"
+
 
 // The main window
 static Window *window;

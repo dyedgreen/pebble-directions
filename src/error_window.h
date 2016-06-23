@@ -1,6 +1,9 @@
 #pragma once
 #include <pebble.h>
 
+// Required functions
+#include "colors.h"
+
 enum ErrorType {
   // Problem connection to phone
   Network = 0,

@@ -1,5 +1,5 @@
-#include <pebble.h>
 #include "progress_layer.h"
+
 
 // Local state (used to ransfer the progress to the update proc)
 int16_t l_progress = 0;
