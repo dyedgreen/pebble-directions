@@ -11,7 +11,8 @@
 *
 * About the success codes:
 * –––
-* 0 = Success; 1 = Route not found; 2 = Too many steps; ...
+* 0 = Success; 1 = Route not found; 2 = Too many steps; 3 = No current position found; ...
+* The code is send in the way of: code + messageNumber * messagePadding
 *
 * About the recived message:
 * –––
@@ -26,14 +27,19 @@
 // Data keys
 var keys = require('message_keys');
 var maxStepCount = 20;
+var currentMessageNumber = 0;
+var messagePadding = 10;
+
+// Location services
+var locationService = require('./location.js');
 
 
 // App Message functions
-function sendSuccess(code) {
+function sendSuccess(code, messageNumber) {
   // Build message
   var key = keys.SUCCESS;
   var dict = {};
-  dict[key] = +code;
+  dict[key] = code + (messageNumber * messagePadding);
 
   // Send message to pebble
   Pebble.sendAppMessage(dict, function() {
@@ -45,7 +51,7 @@ function sendSuccess(code) {
   });
 }
 
-function sendStepItem(stepList, index) {
+function sendStepItem(stepList, index, messageNumber) {
   // Build message
   var key = keys.INSTRUCTIONS + index;
   var dict = {};
@@ -57,10 +63,10 @@ function sendStepItem(stepList, index) {
     index ++;
     if (index < stepList.length && index < maxStepCount) {
       // Recursive callbacks, hell yeah!
-      sendStepItem(stepList, index);
+      sendStepItem(stepList, index, messageNumber);
     } else {
       // We are finished
-      sendSuccess(0);
+      sendSuccess(0, messageNumber);
     }
   }, function() {
     // Error
@@ -68,7 +74,7 @@ function sendStepItem(stepList, index) {
   });
 }
 
-function sendRoute(success, distance, time, stepList) {
+function sendRoute(success, distance, time, stepList, messageNumber) {
   // Send message to pebble if a route was found
   if (success) {
     // Build message
@@ -81,26 +87,26 @@ function sendRoute(success, distance, time, stepList) {
     // Transmit
     Pebble.sendAppMessage(dict, function() {
       // Success!
-      sendStepItem(stepList, 0);
+      sendStepItem(stepList, 0, messageNumber);
     }, function() {
       // Error
       console.log('Transmission failed at [OVERVIEW]');
     });
   } else {
     // Send error message (route not found)
-    sendSuccess(1);
+    sendSuccess(1, messageNumber);
   }
 }
 
 // Api data functions FIXME: Acutally use api
-function fetchAndSendRoute(routeType, destination) {
+function fetchAndSendRoute(routeType, searchText, messageNumber) {
   // TODO: Add api data here (+ use geolocation etc)
-  console.log(routeType);
-  console.log(destination);
+  console.log('Route type:', routeType);
+  console.log('Search text:', searchText);
   /* dummy data: */
   setTimeout(function() {
     // Some dummy loading time
-    sendRoute(true, 560, 16, ['Head north on Morgan St toward W Cermak Rd', 'Head east on W Cermak Rd toward Brockhofweg', destination]);
+    sendRoute(true, 560, 16, ['Head north on Morgan St toward W Cermak Rd', 'Head east on W Cermak Rd toward Brockhofweg', searchText], messageNumber);
   }, 2000);
 }
 
@@ -111,17 +117,10 @@ Pebble.addEventListener('appmessage', function(e) {
 
   // Does the SEARCH field exist?
   if (dict['SEARCH']) {
-    fetchAndSendRoute(dict['SEARCH'].substr(0, 1), dict['SEARCH'].substr(1));
+    // Get the current message number and increment the message number
+    var messageNumber = currentMessageNumber;
+    currentMessageNumber ++;
+    console.log('Message number send:', messageNumber);
+    fetchAndSendRoute(dict['SEARCH'].substr(0, 1), dict['SEARCH'].substr(1), messageNumber);
   }
-});
-
-// Ready event
-Pebble.addEventListener('ready', function() {
-  // Tell the watch that the js part is ready
-  var key = keys.READY;
-  var dict = {};
-  dict[key] = true;
-  Pebble.sendAppMessage(dict);
-
-  console.log('Js part is ready!');
 });

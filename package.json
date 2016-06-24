@@ -23,7 +23,6 @@
       "onlyShownOnCommunication": false
     },
     "messageKeys": [
-      "READY",
       "SEARCH",
       "SUCCESS",
       "DISTANCE",

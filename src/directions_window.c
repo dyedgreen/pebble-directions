@@ -1,6 +1,7 @@
 #include "directions_window.h"
 
 
+#define MESSAGE_PADDING 10
 #define MAX_STEP_COUNT 20
 #define MAX_STEP_CHARS 128
 
@@ -13,9 +14,6 @@
 
 // The RouteData struct
 struct RouteData {
-  // App message state TODO: Is this necessary? (-> probably not!)
-  bool ready;
-  bool callback;
   // Data fields
   int distance;
   int time;
@@ -30,12 +28,14 @@ static int window_height;
 static MenuLayer *directions_list;
 static GColor selected_type_color;
 
+// Dictation input
 static DictationSession *dictation_session;
 static char *address;
 
-// TODO: Maybe implement a timeout later
+// Route data / App message
 struct RouteData *route_data;
 ProgressLayer *progress_layer;
+static int message_number = -1;
 
 // Function declarations
 static void app_message_send_search_data();
@@ -98,38 +98,33 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
   // Test all possible message types
   Tuple *message;
 
-  // Test if the recived message is for key READY
-  message = dict_find(iter, MESSAGE_KEY_READY);
-  if (message) {
-    // Set status to ready
-    route_data->ready = (bool)message->value->int16;
-    // Send pending search data
-    if (route_data->callback) {
-      app_message_send_search_data();
-    }
-  }
-
   // Test if the recived message is for key SUCCESS
   message = dict_find(iter, MESSAGE_KEY_SUCCESS);
   if (message) {
     // Set the progress
     progress_layer_set_progress(progress_layer, PROGRESS_SUCCESS_RECIVED, true);
-    // Respond with the correct UI
-    switch ((int)message->value->int32) {
-      // Success
-      case 0:
-        window_update_data();
-        break;
-      // Route not found / api error
-      case 1:
-        window_display_error(Api);
-        break;
-      // Too many steps (== route not found error)
-      case 2:
-        window_display_error(Api);
-        break;
-      default:
-        window_display_error(Other);
+    // Convert the message value
+    int success_response = (int)message->value->int32;
+    success_response -= message_number * MESSAGE_PADDING;
+    // Drop response, if it is old (smaller than 0)
+    if (success_response >= 0) {
+      // Respond with the correct UI
+      switch (success_response) {
+        // Success
+        case 0:
+          window_update_data();
+          break;
+        // Route not found / api error
+        case 1:
+          window_display_error(Api);
+          break;
+        // Too many steps (== route not found error)
+        case 2:
+          window_display_error(Api);
+          break;
+        default:
+          window_display_error(Other);
+      }
     }
   }
 
@@ -179,6 +174,8 @@ static void app_message_outbox_failed_callback(DictionaryIterator *iter, AppMess
 static void app_message_outbox_sent_callback(DictionaryIterator *iter, void *context) {
   // Display the progress
   progress_layer_set_progress(progress_layer, PROGRESS_SEARCH_SEND, true);
+  // Increment the message number
+  message_number ++;
 }
 
 // Send the search data to the phone
@@ -186,28 +183,23 @@ static void app_message_send_search_data() {
   // Display the progress view
   progress_layer_set_progress(progress_layer, 0, false);
   progress_layer_present(window, progress_layer);
-  // Send the data to the phone if conn is ready
-  if (route_data->ready) {
-    // Create a string with the correct length (len is the length w/o the '/0' char)
-    const int len = strlen(address) + 1;
-    char message[len + 1];
-    // Format the string FIXME (cuts of after 'mee' for the test string ???)
-    snprintf(message, sizeof(message), "%i%s", selected_type_enum, address);
-    // Make sure the string is terminated correctely (just in case)
-    message[len] = '\0';
+  // Create a string with the correct length (len is the length w/o the '/0' char)
+  const int len = strlen(address) + 1;
+  char message[len + 1];
+  // Format the string FIXME (cuts of after 'mee' for the test string ???)
+  snprintf(message, sizeof(message), "%i%s", selected_type_enum, address);
+  // Make sure the string is terminated correctely (just in case)
+  message[len] = '\0';
 
-    // Write string to bluetooth storage
-    DictionaryIterator *iter;
-    if (app_message_outbox_begin(&iter) == APP_MSG_OK) {
-      dict_write_cstring(iter, MESSAGE_KEY_SEARCH, message);
-      // Send the outbox
-      app_message_outbox_send();
-    } else {
-      // Display network error
-      window_display_error(Network);
-    }
+  // Write string to bluetooth storage
+  DictionaryIterator *iter;
+  if (app_message_outbox_begin(&iter) == APP_MSG_OK) {
+    dict_write_cstring(iter, MESSAGE_KEY_SEARCH, message);
+    // Send the outbox
+    app_message_outbox_send();
   } else {
-    route_data->callback = true;
+    // Display network error
+    window_display_error(Network);
   }
 }
 
@@ -217,8 +209,6 @@ static void app_message_start() {
   route_data = malloc(sizeof(struct RouteData));
 
   // Set initial values
-  route_data->ready = true; /*skip ready check*/
-  route_data->callback = false;
   route_data->distance = 0;
   route_data->time = 0;
   route_data->count = 0;
