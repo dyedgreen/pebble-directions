@@ -35,7 +35,7 @@ static char *address;
 // Route data / App message
 struct RouteData *route_data;
 ProgressLayer *progress_layer;
-static int message_number = -1;
+int message_number = -1;
 
 // Function declarations
 static void app_message_send_search_data();
@@ -84,7 +84,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     app_message_send_search_data();
   } else {
     // Dictation failed, remove this window
-    window_stack_remove(window, false);
+    window_stack_pop(false);
   }
 }
 
@@ -235,10 +235,10 @@ static void app_message_resources_destroy() {
 
 // Network error callback
 void window_display_error(enum ErrorType err) {
+  // Pop this window from the window stack (window_stack_remove causes errors)
+  window_stack_pop(false);
   // Show the error window
   error_window_push(err);
-  // Remove this window from the window stack
-  window_stack_remove(window, false);
 }
 
 // Update the data in the window
@@ -347,9 +347,9 @@ void directions_window_push() {
   // Push window to screen
   window_stack_push(window, true);
 
-  // Start the dictation session TODO: Change this, once app sync stuff is working
+  // Start the dictation session TODO: Change this for production
   //dictation_session_start(dictation_session);
-  address = "Meerbusch Brockhofweg 9"; // WIP address string
+  address = "Meerbusch an der alten Schule"; // WIP address string
 
   // Open the connection to the phone
   app_message_start();

@@ -44,7 +44,7 @@ function sendSuccess(code, messageNumber) {
   // Send message to pebble
   Pebble.sendAppMessage(dict, function() {
     // Success!
-    console.log('Transmission completed');
+    console.log('Transmission completed:', code, messageNumber);
   }, function() {
     // Error
     console.log('Transmission failed at [SUCCESS MESSAGE]');
@@ -61,7 +61,10 @@ function sendStepItem(stepList, index, messageNumber) {
   Pebble.sendAppMessage(dict, function() {
     // Success, send next item
     index ++;
-    if (index < stepList.length && index < maxStepCount) {
+    if (maxStepCount > stepList.length) {
+      // Too many steps error
+      sendSuccess(2, messageNumber);
+    } else if (index < stepList.length && index < maxStepCount) {
       // Recursive callbacks, hell yeah!
       sendStepItem(stepList, index, messageNumber);
     } else {
@@ -74,7 +77,7 @@ function sendStepItem(stepList, index, messageNumber) {
   });
 }
 
-function sendRoute(success, distance, time, stepList, messageNumber) {
+function sendRoute(success, distance, time, stepList, stepIconList, messageNumber) {
   // Send message to pebble if a route was found
   if (success) {
     // Build message
@@ -98,16 +101,15 @@ function sendRoute(success, distance, time, stepList, messageNumber) {
   }
 }
 
-// Api data functions FIXME: Acutally use api
+// Fetch a route from the here api and send it to the pebble
 function fetchAndSendRoute(routeType, searchText, messageNumber) {
-  // TODO: Add api data here (+ use geolocation etc)
+  // Log the recived data
   console.log('Route type:', routeType);
   console.log('Search text:', searchText);
-  /* dummy data: */
-  setTimeout(function() {
-    // Some dummy loading time
-    sendRoute(true, 560, 16, ['Head north on Morgan St toward W Cermak Rd', 'Head east on W Cermak Rd toward Brockhofweg', searchText], messageNumber);
-  }, 2000);
+  // Load a route from here api. Data format: { distance, time, stepList[string], stepIconList[int] }
+  locationService.createRoute(routeType, searchText, function(success, data) {
+    sendRoute(success, data.distance, data.time, data.stepList, data.stepIconList, messageNumber);
+  });
 }
 
 // Accept data from the pebble watch
