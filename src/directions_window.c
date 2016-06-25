@@ -4,6 +4,7 @@
 #define MESSAGE_PADDING 10
 #define MAX_STEP_COUNT 20
 #define MAX_STEP_CHARS 128
+#define ADDRESS_MAX_CHARS 128
 
 // Progress display vals
 #define PROGRESS_SEARCH_SEND 50
@@ -44,7 +45,7 @@ static GBitmap *icon_step_final;
 
 // Dictation input
 static DictationSession *dictation_session;
-static char *address;
+static char address[ADDRESS_MAX_CHARS];
 
 // Route data / App message
 struct RouteData *route_data;
@@ -125,7 +126,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
   // Test if dication was successfull
   if (status == DictationSessionStatusSuccess) {
     // Store the address and load a route
-    address = transcript;
+    strcpy(address, transcript);
     // Send the search data
     app_message_send_search_data();
   } else {
@@ -410,7 +411,7 @@ static void window_load() {
   progress_layer = progress_layer_create(bounds);
 
   // Set up the dictation session
-  dictation_session = dictation_session_create(0, dictation_session_callback, NULL);
+  dictation_session = dictation_session_create(ADDRESS_MAX_CHARS, dictation_session_callback, NULL);
   dictation_session_enable_confirmation(dictation_session, true);
   dictation_session_enable_error_dialogs(dictation_session, true);
 

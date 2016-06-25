@@ -58,7 +58,7 @@ function loadLocationForSearch(searchText, currentLat, currentLon, callback) {
     url = url.concat(hereAppId);
     url = url.concat('&app_code=').concat(hereAppCode);
     url = url.concat('&gen=9'); /*don't break on here api update*/
-    url = url.concat('&searchtext=').concat(searchText.split(' ').join('+'));
+    url = url.concat('&searchtext=').concat(encodeURI(searchText.split(' ').join('+')));
     url = url.concat('&prox=').concat(currentLat).concat(',').concat(currentLon).concat(',50000'); /* favour results within 50 km range */
   // Perform an request
   makeJsonHttpGetRequest(url, function(success, res) {
