@@ -39,6 +39,7 @@ function loadCurrentLocation(callback) {
   navigator.geolocation.getCurrentPosition(
     // Success
     function(pos) {
+      //callback(true, 52.5, 13.4); /* THIS IS FOR DEMO / SCREENSHOTS IN THE EMULATOR */
       callback(true, pos.coords.latitude, pos.coords.longitude);
     },
     // Error
@@ -58,7 +59,7 @@ function loadLocationForSearch(searchText, currentLat, currentLon, callback) {
     url = url.concat('&app_code=').concat(hereAppCode);
     url = url.concat('&gen=9'); /*don't break on here api update*/
     url = url.concat('&searchtext=').concat(searchText.split(' ').join('+'));
-    url = url.concat('&prox=').concat(currentLat).concat(',').concat(currentLon).concat(',150000'); /* favour results within 150 km range */
+    url = url.concat('&prox=').concat(currentLat).concat(',').concat(currentLon).concat(',50000'); /* favour results within 50 km range */
   // Perform an request
   makeJsonHttpGetRequest(url, function(success, res) {
     if (success) {
@@ -66,6 +67,7 @@ function loadLocationForSearch(searchText, currentLat, currentLon, callback) {
       try {
         var foundLat = res.Response.View[0].Result[0].Location.NavigationPosition[0].Latitude;
         var foundLon = res.Response.View[0].Result[0].Location.NavigationPosition[0].Longitude;
+        //callback(true, 52.5, 13.45); /* THIS IS FOR DEMO / SCREENSHOTS IN THE EMULATOR (add 'Schleusenufer' on watch as address string) */
         callback(true, foundLat, foundLon);
       } catch (e) {
         callback(false, 0, 0);
@@ -90,6 +92,7 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
     uRight: 'e',
     uLeft: 'f',
     attr: 'g',
+    final: 'h',
   };
   // Maps the direction retrived from here api to icon name
   var directionMap = {
@@ -127,7 +130,10 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
           // Add the text
           routeData.stepList[index] = step.instruction;
           // Add the icon
-          if (step.hasOwnProperty('direction')) {
+          if (res.response.route[0].leg[0].maneuver.length == index + 1) {
+            // This is the last step, add the finished icon
+            routeData.stepIconsString = routeData.stepIconsString.concat(icons['final']);
+          } else if (step.hasOwnProperty('direction')) {
             // Display the specified icon
             if (directionMap.hasOwnProperty(step.direction)) {
               routeData.stepIconsString = routeData.stepIconsString.concat(icons[directionMap[step.direction]]);

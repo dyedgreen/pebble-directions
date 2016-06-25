@@ -33,50 +33,26 @@
     "resources": {
       "media": [
         {
-          "file": "images/car_black.png",
-          "name": "ICON_CAR_BLACK",
+          "file": "images/car.png",
+          "name": "ICON_CAR",
           "targetPlatforms": null,
           "type": "bitmap"
         },
         {
-          "file": "images/car_white.png",
-          "name": "ICON_CAR_WHITE",
+          "file": "images/bike.png",
+          "name": "ICON_BIKE",
           "targetPlatforms": null,
           "type": "bitmap"
         },
         {
-          "file": "images/train_black.png",
-          "name": "ICON_TRAIN_BLACK",
+          "file": "images/train.png",
+          "name": "ICON_TRAIN",
           "targetPlatforms": null,
           "type": "bitmap"
         },
         {
-          "file": "images/train_white.png",
-          "name": "ICON_TRAIN_WHITE",
-          "targetPlatforms": null,
-          "type": "bitmap"
-        },
-        {
-          "file": "images/bike_black.png",
-          "name": "ICON_BIKE_BLACK",
-          "targetPlatforms": null,
-          "type": "bitmap"
-        },
-        {
-          "file": "images/bike_white.png",
-          "name": "ICON_BIKE_WHITE",
-          "targetPlatforms": null,
-          "type": "bitmap"
-        },
-        {
-          "file": "images/walk_black.png",
-          "name": "ICON_WALK_BLACK",
-          "targetPlatforms": null,
-          "type": "bitmap"
-        },
-        {
-          "file": "images/walk_white.png",
-          "name": "ICON_WALK_WHITE",
+          "file": "images/walk.png",
+          "name": "ICON_WALK",
           "targetPlatforms": null,
           "type": "bitmap"
         },
@@ -131,6 +107,12 @@
         {
           "file": "images/step_attr.png",
           "name": "ICON_STEP_ATTR",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/step_final.png",
+          "name": "ICON_STEP_FINAL",
           "targetPlatforms": null,
           "type": "bitmap"
         }

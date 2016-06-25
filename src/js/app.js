@@ -116,6 +116,7 @@ function fetchAndSendRoute(routeType, searchText, messageNumber) {
   console.log('Search text:', searchText);
   // Load a route from here api. Data format: { distance, time, stepList[string], stepIconsString }
   locationService.createRoute(routeType, searchText, function(success, data) {
+    console.log('Will send:', success, data.stepList.length, data.stepIconsString, messageNumber);
     sendRoute(success, data.distance, data.time, data.stepList, data.stepIconsString, messageNumber);
   });
 }

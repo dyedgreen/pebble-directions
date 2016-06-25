@@ -40,6 +40,7 @@ static GBitmap *icon_step_left;
 static GBitmap *icon_step_uright;
 static GBitmap *icon_step_uleft;
 static GBitmap *icon_step_attr;
+static GBitmap *icon_step_final;
 
 // Dictation input
 static DictationSession *dictation_session;
@@ -104,6 +105,9 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex 
           break;
         case 'g':
           icon = icon_step_attr;
+          break;
+        case 'h':
+          icon = icon_step_final;
           break;
         default:
           icon = icon_step_type;
@@ -344,6 +348,7 @@ static void window_unload() {
   gbitmap_destroy(icon_step_uright);
   gbitmap_destroy(icon_step_uleft);
   gbitmap_destroy(icon_step_attr);
+  gbitmap_destroy(icon_step_final);
 }
 
 static void window_disappear() {
@@ -413,19 +418,19 @@ static void window_load() {
   switch (selected_type_enum) {
     case 0:
       // Car icon
-      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_BLACK);
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR);
       break;
     case 1:
       // Bike icon
-      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_BIKE_BLACK);
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_BIKE);
       break;
     case 2:
       // Train icon
-      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_TRAIN_BLACK);
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_TRAIN);
       break;
     case 3:
       // Walk icon
-      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_WALK_BLACK);
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_WALK);
       break;
     default:
       // Forward icon
@@ -437,6 +442,7 @@ static void window_load() {
   icon_step_uright = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_URIGHT);
   icon_step_uleft = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_ULEFT);
   icon_step_attr = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_ATTR);
+  icon_step_final = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_FINAL);
 }
 
 // Push the window to the window stack
@@ -456,12 +462,9 @@ void directions_window_push() {
   // Push window to screen
   window_stack_push(window, true);
 
-  // Start the dictation session TODO: Change this for production
-  //dictation_session_start(dictation_session);
-  address = "Meerbusch an der alten Schule"; // WIP address string
+  // Start the dictation session
+  dictation_session_start(dictation_session);
 
   // Open the connection to the phone
   app_message_start();
-  // TODO: Remove this for final version; this is a playeholder implementation (skipping the dictation)
-  app_message_send_search_data();
 }

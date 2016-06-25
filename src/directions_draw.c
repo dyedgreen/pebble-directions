@@ -151,7 +151,7 @@ void directions_draw_step(GContext *ctx, GRect bounds, GColor color, char *text,
     graphics_fill_rect(ctx, header_box, 0, GCornerNone);
     // Draw icon
     graphics_context_set_compositing_mode(ctx, GCompOpSet);
-    graphics_draw_bitmap_in_rect(ctx, step_icon, GRect((bounds.size.w - 24) / 2, 18, 24, 24));
+    graphics_draw_bitmap_in_rect(ctx, step_icon, GRect((bounds.size.w - 24) / 2, 20, 24, 24));
     // Draw text
     GRect text_box = GRect(7, 7 + header_box.size.h, bounds.size.w - 14, bounds.size.h - header_box.size.h - 14);
     graphics_context_set_text_color(ctx, color_text);
