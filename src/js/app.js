@@ -4,8 +4,9 @@
 * About the send messages
 * –––
 * (1) Overview data is send (distance, time needed)
-* (2) Step data array is send (each step string, max 20 entrys) -> THE LAST SEND INDEX IS THE LENGTH!
-* (3) Success value is send (terminates the transmittion; it's true/false
+* (2) Step icon data is send as a 20 char string (each char encodes one icon!)
+* (3) Step data array is send (each step string, max 20 entrys) -> THE LAST SEND INDEX IS THE LENGTH!
+* (4) Success value is send (terminates the transmittion; it's true/false
 *   value determines whether the transmition was successfull or not (E.g.
 *   if false is send as the success first, no route was found)
 *
@@ -21,12 +22,17 @@
 *   The first character is always the type selected, the rest
 *   is the written address.
 * {selected_type} vals: 0 = Car; 1 = Bike; 2 = Train; 3 = Walk;
+*
+* About the step icon data string
+* –––
+* Chars map to the following icons: type: 'a', forward: 'b', right: 'c', left: 'd', uRight: 'e', uLeft: 'f', attr: 'g'
 */
 
 
 // Data keys
 var keys = require('message_keys');
 var maxStepCount = 20;
+var maxStepStringLength = 128;
 var currentMessageNumber = 0;
 var messagePadding = 10;
 
@@ -55,16 +61,13 @@ function sendStepItem(stepList, index, messageNumber) {
   // Build message
   var key = keys.INSTRUCTIONS + index;
   var dict = {};
-  dict[key] = stepList[index];
+  dict[key] = stepList[index].substr(0, maxStepStringLength);
 
   // Send message to pebble
   Pebble.sendAppMessage(dict, function() {
     // Success, send next item
     index ++;
-    if (maxStepCount > stepList.length) {
-      // Too many steps error
-      sendSuccess(2, messageNumber);
-    } else if (index < stepList.length && index < maxStepCount) {
+    if (index < stepList.length && index < maxStepCount) {
       // Recursive callbacks, hell yeah!
       sendStepItem(stepList, index, messageNumber);
     } else {
@@ -77,15 +80,17 @@ function sendStepItem(stepList, index, messageNumber) {
   });
 }
 
-function sendRoute(success, distance, time, stepList, stepIconList, messageNumber) {
+function sendRoute(success, distance, time, stepList, stepIconsString, messageNumber) {
   // Send message to pebble if a route was found
-  if (success) {
+  if (success && maxStepCount >= stepList.length) {
     // Build message
     var keyDistance = keys.DISTANCE;
     var keyTime = keys.TIME;
+    var keyIcons = keys.INSTRUCTION_ICONS;
     var dict = {};
     dict[keyDistance] = +distance;
     dict[keyTime] = +time;
+    dict[keyIcons] = ''.concat(stepIconsString);
 
     // Transmit
     Pebble.sendAppMessage(dict, function() {
@@ -95,6 +100,9 @@ function sendRoute(success, distance, time, stepList, stepIconList, messageNumbe
       // Error
       console.log('Transmission failed at [OVERVIEW]');
     });
+  } else if (maxStepCount < stepList.length) {
+    // Too many steps error
+    sendSuccess(2, messageNumber);
   } else {
     // Send error message (route not found)
     sendSuccess(1, messageNumber);
@@ -106,9 +114,9 @@ function fetchAndSendRoute(routeType, searchText, messageNumber) {
   // Log the recived data
   console.log('Route type:', routeType);
   console.log('Search text:', searchText);
-  // Load a route from here api. Data format: { distance, time, stepList[string], stepIconList[int] }
+  // Load a route from here api. Data format: { distance, time, stepList[string], stepIconsString }
   locationService.createRoute(routeType, searchText, function(success, data) {
-    sendRoute(success, data.distance, data.time, data.stepList, data.stepIconList, messageNumber);
+    sendRoute(success, data.distance, data.time, data.stepList, data.stepIconsString, messageNumber);
   });
 }
 

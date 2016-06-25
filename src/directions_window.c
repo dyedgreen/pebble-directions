@@ -9,6 +9,7 @@
 #define PROGRESS_SEARCH_SEND 50
 #define PROGRESS_DISTANCE_RECIVED 80
 #define PROGRESS_TIME_RECIVED PROGRESS_DISTANCE_RECIVED
+#define PROGRESS_ICONS_RECIVED PROGRESS_DISTANCE_RECIVED
 #define PROGRESS_STEP_RECIVED 95
 #define PROGRESS_SUCCESS_RECIVED 100
 
@@ -17,6 +18,7 @@ struct RouteData {
   // Data fields
   int distance;
   int time;
+  char icons[MAX_STEP_COUNT + 1];
   char steps[MAX_STEP_COUNT][MAX_STEP_CHARS];
   int count;
 };
@@ -27,6 +29,15 @@ static int window_height;
 
 static MenuLayer *directions_list;
 static GColor selected_type_color;
+
+// Step icons
+static GBitmap *icon_step_type;
+static GBitmap *icon_step_forward;
+static GBitmap *icon_step_right;
+static GBitmap *icon_step_left;
+static GBitmap *icon_step_uright;
+static GBitmap *icon_step_uleft;
+static GBitmap *icon_step_attr;
 
 // Dictation input
 static DictationSession *dictation_session;
@@ -58,15 +69,44 @@ static int16_t get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex 
 
 // Draw menu cell callback
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *context) {
-  // Determine what row to draw TODO: implement nicer UI
+  // Local vars
+  int data_index = cell_index->row - 1;
+  GBitmap *icon;
+  // Determine what row to draw
   switch (cell_index->row) {
     // Summary
     case 0:
-      directions_draw_summary(ctx, layer_get_bounds(cell_layer), selected_type_color, route_data->distance, route_data->time);
+      directions_draw_summary(ctx, layer_get_bounds(cell_layer), selected_type_color, route_data->distance, route_data->time, address);
       break;
     // Step description
     default:
-      directions_draw_step(ctx, layer_get_bounds(cell_layer), selected_type_color, route_data->steps[cell_index->row - 1], cell_index->row - 1, (int16_t)route_data->count);
+      // Select the correct icon
+      switch (route_data->icons[data_index]) {
+        case 'a':
+          icon = icon_step_type;
+          break;
+        case 'b':
+          icon = icon_step_forward;
+          break;
+        case 'c':
+          icon = icon_step_right;
+          break;
+        case 'd':
+          icon = icon_step_left;
+          break;
+        case 'e':
+          icon = icon_step_uright;
+          break;
+        case 'f':
+          icon = icon_step_uleft;
+          break;
+        case 'g':
+          icon = icon_step_attr;
+          break;
+        default:
+          icon = icon_step_type;
+      }
+      directions_draw_step(ctx, layer_get_bounds(cell_layer), selected_type_color, route_data->steps[data_index], icon, data_index, (int16_t)route_data->count);
   }
 }
 
@@ -144,6 +184,16 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
     route_data->time = (int)message->value->int32;
   }
 
+  // Test if the recived message is fof key INSTRUCTION_ICONS
+  message = dict_find(iter, MESSAGE_KEY_INSTRUCTION_ICONS);
+  if (message) {
+    // Set the progress
+    progress_layer_set_progress(progress_layer, PROGRESS_ICONS_RECIVED, true);
+    // Copy the icon string
+    strcpy(route_data->icons, message->value->cstring);
+    route_data->icons[MAX_STEP_COUNT] = '\0';
+  }
+
   // Test if the recived message is for key INSTRUCTIONS
   for (int i = 0; i < MAX_STEP_COUNT; i++) {
     message = dict_find(iter, MESSAGE_KEY_INSTRUCTIONS + i);
@@ -212,6 +262,11 @@ static void app_message_start() {
   route_data->distance = 0;
   route_data->time = 0;
   route_data->count = 0;
+  // Initialise the icons string (has the length of MAX_STEP_COUNT + 1 for correct null termination)
+  for (int i = 0; i < MAX_STEP_COUNT; i ++) {
+    route_data->icons[i] = 'a';
+  }
+  route_data->icons[MAX_STEP_COUNT] = '\0';
   // Register all callbacks
   app_message_register_inbox_received(app_message_inbox_recived_callback);
   app_message_register_inbox_dropped(app_message_inbox_dropped_callback);
@@ -274,6 +329,15 @@ static void window_unload() {
   // Destroy the window
   window_destroy(window);
   window = NULL;
+
+  // Destroy the step icons
+  gbitmap_destroy(icon_step_type);
+  gbitmap_destroy(icon_step_forward);
+  gbitmap_destroy(icon_step_right);
+  gbitmap_destroy(icon_step_left);
+  gbitmap_destroy(icon_step_uright);
+  gbitmap_destroy(icon_step_uleft);
+  gbitmap_destroy(icon_step_attr);
 }
 
 static void window_disappear() {
@@ -328,6 +392,35 @@ static void window_load() {
 
   // Create the progress layer
   progress_layer = progress_layer_create(bounds);
+
+  // Create the step icon resources
+  switch (selected_type_enum) {
+    case 0:
+      // Car icon
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_CAR_BLACK);
+      break;
+    case 1:
+      // Bike icon
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_BIKE_BLACK);
+      break;
+    case 2:
+      // Train icon
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_TRAIN_BLACK);
+      break;
+    case 3:
+      // Walk icon
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_WALK_BLACK);
+      break;
+    default:
+      // Forward icon
+      icon_step_type = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_FORWARD);
+  }
+  icon_step_forward = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_FORWARD);
+  icon_step_right = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_RIGHT);
+  icon_step_left = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_LEFT);
+  icon_step_uright = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_URIGHT);
+  icon_step_uleft = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_ULEFT);
+  icon_step_attr = gbitmap_create_with_resource(RESOURCE_ID_ICON_STEP_ATTR);
 }
 
 // Push the window to the window stack

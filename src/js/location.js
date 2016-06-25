@@ -82,7 +82,15 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
   // Transport modes, mapped to pebble ids
   var modes = ['car', 'bicycle', 'publicTransport', 'pedestrian'];
   // Pebble direction icons, mapped to pebble ids (type = show nav type icon, attr = show attribution icon)
-  var icons = ['type', 'forward', 'right', 'left', 'uRight', 'uLeft', 'attr'];
+  var icons = {
+    type: 'a',
+    forward: 'b',
+    right: 'c',
+    left: 'd',
+    uRight: 'e',
+    uLeft: 'f',
+    attr: 'g',
+  };
   // Maps the direction retrived from here api to icon name
   var directionMap = {
     forward: 'forward',
@@ -107,14 +115,14 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
     if (success) {
       // Success (will fail if expected fields are not available in response)
       try {
-        // Our route data will go here. Format: { distance, time, stepList[string], stepIconList[int] }
+        // Our route data will go here. Format: { distance, time, stepList[string], stepIconsString[int] }
         var routeData = {};
         // Get the summary
         routeData.distance = res.response.route[0].summary.distance; /* in meters */
         routeData.time = Math.ceil(res.response.route[0].summary.travelTime / 60); /* in minutes */
         // Get the steps
         routeData.stepList = [];
-        routeData.stepIconList = [];
+        routeData.stepIconsString = '';
         res.response.route[0].leg[0].maneuver.forEach(function(step, index) {
           // Add the text
           routeData.stepList[index] = step.instruction;
@@ -122,21 +130,21 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
           if (step.hasOwnProperty('direction')) {
             // Display the specified icon
             if (directionMap.hasOwnProperty(step.direction)) {
-              routeData.stepIconList[index] = icons.indexOf(directionMap[step.direction]);
+              routeData.stepIconsString = routeData.stepIconsString.concat(icons[directionMap[step.direction]]);
             } else {
               // Display the travel type icon
-              routeData.stepIconList[index] = icons.indexOf('type');
+              routeData.stepIconsString = routeData.stepIconsString.concat(icons['type']);
             }
           } else {
             // Display the travel type icon
-            routeData.stepIconList[index] = icons.indexOf('type');
+            routeData.stepIconsString = routeData.stepIconsString.concat(icons['type']);
           }
         });
         // Test for attribution
         if (res.response.hasOwnProperty('sourceAttribution')) {
           // Add attribution text as last list entry, removing all html markup from it
           routeData.stepList.push(res.response.sourceAttribution.attribution.replace(/<.+?>/g, ''));
-          routeData.stepIconList.push(icons.indexOf('attr'));
+          routeData.stepIconsString = routeData.stepIconsString.concat(icons['attr']);
         }
         // We are done
         callback(true, routeData);
@@ -147,7 +155,7 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
       // Error
       routeErrorCallback(callback);
     }
-  }, true);
+  });
 }
 
 // Performs all the steps neccessary to return a complete route (the callback takes: success / route data)
@@ -173,7 +181,7 @@ function createRoute(routeType, searchText, callback) {
 }
 // Helper function to define createRoute error callback all in one place
 function routeErrorCallback(callback) {
-  callback(false, { distance: 0, time: 0, stepList: [], stepIconList: [] });
+  callback(false, { distance: 0, time: 0, stepList: [], stepIconsString: '' });
 }
 
 

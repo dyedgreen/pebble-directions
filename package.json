@@ -27,6 +27,7 @@
       "SUCCESS",
       "DISTANCE",
       "TIME",
+      "INSTRUCTION_ICONS",
       "INSTRUCTIONS[20]"
     ],
     "resources": {
@@ -94,6 +95,42 @@
         {
           "file": "images/error_other.png",
           "name": "ICON_ERROR_OTHER",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/step_forward.png",
+          "name": "ICON_STEP_FORWARD",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/step_left.png",
+          "name": "ICON_STEP_LEFT",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/step_uleft.png",
+          "name": "ICON_STEP_ULEFT",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/step_right.png",
+          "name": "ICON_STEP_RIGHT",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/step_uright.png",
+          "name": "ICON_STEP_URIGHT",
+          "targetPlatforms": null,
+          "type": "bitmap"
+        },
+        {
+          "file": "images/step_attr.png",
+          "name": "ICON_STEP_ATTR",
           "targetPlatforms": null,
           "type": "bitmap"
         }
