@@ -88,15 +88,15 @@ void directions_draw_summary(GContext *ctx, GRect bounds, GColor color, int dist
     // * Square UI *
     // *************
     // Header bg
-    GRect header_box = GRect(0, 0, bounds.size.w, 67);
+    GRect header_box = GRect(0, 0, bounds.size.w, 60 + STATUS_BAR_LAYER_HEIGHT);
     graphics_context_set_fill_color(ctx, color);
     graphics_fill_rect(ctx, header_box, 0, GCornerNone);
     // Time
-    GRect time_box = GRect(7, 7, bounds.size.w - 14, 28);
+    GRect time_box = GRect(7, STATUS_BAR_LAYER_HEIGHT, bounds.size.w - 14, 28);
     graphics_context_set_text_color(ctx, GColorWhite);
     graphics_draw_text(ctx, string_time, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD), time_box, GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     // Distance
-    GRect distance_box = GRect(7, 7 + time_box.size.h, bounds.size.w - 14, 18);
+    GRect distance_box = GRect(7, STATUS_BAR_LAYER_HEIGHT + time_box.size.h, bounds.size.w - 14, 18);
     graphics_context_set_text_color(ctx, color_distance);
     graphics_draw_text(ctx, string_distance, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), distance_box, GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     // Address
@@ -133,7 +133,7 @@ void directions_draw_step(GContext *ctx, GRect bounds, GColor color, char *text,
     graphics_fill_circle(ctx, GPoint(bounds.size.w / 2, -80), 140);
     // Draw icon
     graphics_context_set_compositing_mode(ctx, GCompOpSet);
-    graphics_draw_bitmap_in_rect(ctx, step_icon, GRect((bounds.size.w - 24) / 2, 24, 24, 24));
+    graphics_draw_bitmap_in_rect(ctx, step_icon, GRect((bounds.size.w - 24) / 2, 28, 24, 24));
     // Draw text
     GRect text_box = GRect(0, 67, bounds.size.w, bounds.size.h - 74);
     GTextAttributes *text_attributes = graphics_text_attributes_create();
@@ -151,7 +151,7 @@ void directions_draw_step(GContext *ctx, GRect bounds, GColor color, char *text,
     graphics_fill_rect(ctx, header_box, 0, GCornerNone);
     // Draw icon
     graphics_context_set_compositing_mode(ctx, GCompOpSet);
-    graphics_draw_bitmap_in_rect(ctx, step_icon, GRect((bounds.size.w - 24) / 2, 14, 24, 24));
+    graphics_draw_bitmap_in_rect(ctx, step_icon, GRect((bounds.size.w - 24) / 2, 18, 24, 24));
     // Draw text
     GRect text_box = GRect(7, 7 + header_box.size.h, bounds.size.w - 14, bounds.size.h - header_box.size.h - 14);
     graphics_context_set_text_color(ctx, color_text);

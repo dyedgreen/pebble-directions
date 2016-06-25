@@ -30,6 +30,8 @@ static int window_height;
 static MenuLayer *directions_list;
 static GColor selected_type_color;
 
+static StatusBarLayer *status_bar;
+
 // Step icons
 static GBitmap *icon_step_type;
 static GBitmap *icon_step_forward;
@@ -315,6 +317,10 @@ static void window_unload() {
   menu_layer_destroy(directions_list);
   directions_list = NULL;
 
+  // Destroy the status bar layer
+  status_bar_layer_destroy(status_bar);
+  status_bar = NULL;
+
   // Destroy the progress layer
   progress_layer_destroy(progress_layer);
   progress_layer = NULL;
@@ -341,7 +347,7 @@ static void window_unload() {
 }
 
 static void window_disappear() {
-  // Remove the progress layer
+  // Remove the progress layer (to kill all timers that are still running)
   progress_layer_remove(progress_layer);
 }
 
@@ -352,27 +358,26 @@ static void window_load() {
   window_height = bounds.size.h;
 
   // Work out the correct type color
-  switch (selected_type_enum) {
-    case 0:
-      selected_type_color = COLOR_CAR;
-      break;
-    case 1:
-      selected_type_color = COLOR_BIKE;
-      break;
-    case 2:
-      selected_type_color = COLOR_TRAIN;
-      break;
-    case 3:
-      selected_type_color = COLOR_WALK;
-      break;
-    default:
-      selected_type_color = GColorBlack;
-  }
-
-  // Set up the dictation session
-  dictation_session = dictation_session_create(0, dictation_session_callback, NULL);
-  dictation_session_enable_confirmation(dictation_session, true);
-  dictation_session_enable_error_dialogs(dictation_session, true);
+  #ifdef PBL_COLOR
+    switch (selected_type_enum) {
+      case 0:
+        selected_type_color = COLOR_CAR;
+        break;
+      case 1:
+        selected_type_color = COLOR_BIKE;
+        break;
+      case 2:
+        selected_type_color = COLOR_TRAIN;
+        break;
+      case 3:
+        selected_type_color = COLOR_WALK;
+        break;
+      default:
+        selected_type_color = GColorBlack;
+    }
+  #else
+    selected_type_color = GColorBlack;
+  #endif
 
   // Create the menu layer
   directions_list = menu_layer_create(bounds);
@@ -390,8 +395,19 @@ static void window_load() {
   // Add the menu layer to the window
   layer_add_child(window_layer, menu_layer_get_layer(directions_list));
 
+  // Create and set up the status bar layer
+  status_bar = status_bar_layer_create();
+  status_bar_layer_set_colors(status_bar, selected_type_color, GColorWhite);
+  status_bar_layer_set_separator_mode(status_bar, StatusBarLayerSeparatorModeNone);
+  layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));
+
   // Create the progress layer
   progress_layer = progress_layer_create(bounds);
+
+  // Set up the dictation session
+  dictation_session = dictation_session_create(0, dictation_session_callback, NULL);
+  dictation_session_enable_confirmation(dictation_session, true);
+  dictation_session_enable_error_dialogs(dictation_session, true);
 
   // Create the step icon resources
   switch (selected_type_enum) {
