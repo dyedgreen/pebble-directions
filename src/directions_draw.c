@@ -47,9 +47,9 @@ void directions_draw_summary(GContext *ctx, GRect bounds, GColor color, int dist
 
   // Get the colors
   #ifdef PBL_COLOR
-    GColor color_distance = GColorDarkGray;
+    GColor color_time = GColorBlack;
   #else
-    GColor color_distance = GColorWhite;
+    GColor color_time = GColorWhite;
     color = GColorBlack;
   #endif
 
@@ -70,11 +70,11 @@ void directions_draw_summary(GContext *ctx, GRect bounds, GColor color, int dist
     graphics_fill_circle(ctx, (GPoint) {bounds.size.w / 2, bounds.size.h / (-2)}, bounds.size.h);
     // Time
     GRect time_box = GRect(0, 23, bounds.size.w, 28);
-    graphics_context_set_text_color(ctx, GColorWhite);
+    graphics_context_set_text_color(ctx, color_time);
     graphics_draw_text(ctx, string_time, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD), time_box, GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     // Distance
     GRect distance_box = GRect(0, 23 + time_box.size.h, bounds.size.w, 18);
-    graphics_context_set_text_color(ctx, color_distance);
+    graphics_context_set_text_color(ctx, GColorWhite);
     graphics_draw_text(ctx, string_distance, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), distance_box, GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     // Address
     GRect address_box = GRect(0, 7 + bounds.size.h / 2, bounds.size.w, bounds.size.h / 2 - 14);
@@ -94,11 +94,11 @@ void directions_draw_summary(GContext *ctx, GRect bounds, GColor color, int dist
     graphics_fill_rect(ctx, header_box, 0, GCornerNone);
     // Time
     GRect time_box = GRect(7, STATUS_BAR_LAYER_HEIGHT, bounds.size.w - 14, 28);
-    graphics_context_set_text_color(ctx, GColorWhite);
+    graphics_context_set_text_color(ctx, color_time);
     graphics_draw_text(ctx, string_time, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD), time_box, GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     // Distance
     GRect distance_box = GRect(7, STATUS_BAR_LAYER_HEIGHT + time_box.size.h, bounds.size.w - 14, 18);
-    graphics_context_set_text_color(ctx, color_distance);
+    graphics_context_set_text_color(ctx, GColorWhite);
     graphics_draw_text(ctx, string_distance, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), distance_box, GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     // Address
     GRect address_box = GRect(7, 7 + header_box.size.h, bounds.size.w - 14, bounds.size.h - header_box.size.h - 14);
