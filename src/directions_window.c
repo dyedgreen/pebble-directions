@@ -135,6 +135,15 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
   }
 }
 
+static void dictation_session_start_handler() {
+  // Start the dictation session and handel all possible errors
+  DictationSessionStatus dictation_status = dictation_session_start(dictation_session);
+  if (dictation_status != DictationSessionStatusSuccess) {
+    // Display error
+    window_display_error(Network);
+  }
+}
+
 
 // *********************
 // * APP MESSAGE STUFF *
@@ -464,7 +473,7 @@ void directions_window_push() {
   window_stack_push(window, true);
 
   // Start the dictation session
-  dictation_session_start(dictation_session);
+  dictation_session_start_handler();
 
   // Open the connection to the phone
   app_message_start();

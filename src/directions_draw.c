@@ -14,7 +14,7 @@ GRect directions_draw_more_indicator(GContext *ctx, GRect bounds) {
 
   // Draw the background
   graphics_context_set_fill_color(ctx, color_bg);
-  graphics_fill_rect(ctx, GRect(0, bounds.size.h - 17, bounds.size.w, 17), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(0, bounds.size.h - 17, bounds.size.w, 25), 0, GCornerNone);
   // Draw the arrow (draws a path)
   struct GPathInfo path_arrow_info = {
     .num_points = 3,
@@ -80,6 +80,7 @@ void directions_draw_summary(GContext *ctx, GRect bounds, GColor color, int dist
     GRect address_box = GRect(0, 7 + bounds.size.h / 2, bounds.size.w, bounds.size.h / 2 - 14);
     GTextAttributes *text_attributes = graphics_text_attributes_create();
     graphics_text_attributes_enable_screen_text_flow(text_attributes, 7);
+    graphics_text_attributes_enable_paging(text_attributes, address_box.origin, address_box);
     graphics_context_set_text_color(ctx, color);
     graphics_draw_text(ctx, string_address, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), address_box, GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, text_attributes);
     graphics_text_attributes_destroy(text_attributes);
@@ -138,6 +139,7 @@ void directions_draw_step(GContext *ctx, GRect bounds, GColor color, char *text,
     GRect text_box = GRect(0, 67, bounds.size.w, bounds.size.h - 74);
     GTextAttributes *text_attributes = graphics_text_attributes_create();
     graphics_text_attributes_enable_screen_text_flow(text_attributes, 7);
+    graphics_text_attributes_enable_paging(text_attributes, text_box.origin, text_box);
     graphics_context_set_text_color(ctx, color_text);
     graphics_draw_text(ctx, text, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), text_box, GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, text_attributes);
     graphics_text_attributes_destroy(text_attributes);
