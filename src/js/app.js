@@ -25,7 +25,11 @@
 *
 * About the step icon data string
 * –––
-* Chars map to the following icons: type: 'a', forward: 'b', right: 'c', left: 'd', uRight: 'e', uLeft: 'f', attr: 'g'
+* Chars map to the following icons: type: 'a', forward: 'b', right: 'c', left: 'd', uRight: 'e', uLeft: 'f', attr: 'g', final: 'h'
+*
+* About the config of 'named addresses'
+* –––
+* The config stores an array of these name / address pairs, every time a search request hits the phone,
 */
 
 

@@ -43,8 +43,13 @@ static void window_load() {
       icon_error = gbitmap_create_with_resource(RESOURCE_ID_ICON_ERROR_API);
       text_error = "No route could be found";
       break;
-    // Other / Undefined
+      // Dictation
     case 2:
+      icon_error = gbitmap_create_with_resource(RESOURCE_ID_ICON_ERROR_DICTATION);
+      text_error = "Could not start dictation";
+      break;
+    // Other / Undefined
+    default:
       icon_error = gbitmap_create_with_resource(RESOURCE_ID_ICON_ERROR_OTHER);
       text_error = "Something went wrong";
       break;

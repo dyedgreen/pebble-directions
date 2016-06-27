@@ -9,8 +9,10 @@ enum ErrorType {
   Network = 0,
   // Error response from api
   Api = 1,
+  // Error when trying to start the dictation
+  Dictation = 2,
   // Something simply went wrong
-  Other = 2
+  Other = 3
 };
 
 void error_window_push(enum ErrorType);

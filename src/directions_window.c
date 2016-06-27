@@ -140,7 +140,7 @@ static void dictation_session_start_handler() {
   DictationSessionStatus dictation_status = dictation_session_start(dictation_session);
   if (dictation_status != DictationSessionStatusSuccess) {
     // Display error
-    window_display_error(Network);
+    window_display_error(Dictation);
   }
 }
 
