@@ -29,7 +29,8 @@
 *
 * About the config of 'named addresses'
 * –––
-* The config stores an array of these name / address pairs, every time a search request hits the phone,
+* The config stores an array of these name / address pairs, every time a search request hits the phone the
+* recived search string is matched against the names of all entrys and replaced with the addess is a match is found.
 */
 
 
@@ -42,6 +43,8 @@ var messagePadding = 10;
 
 // Location services
 var locationService = require('./location.js');
+// Configuration
+var config = require('./config.js');
 
 
 // App Message functions
@@ -118,6 +121,13 @@ function fetchAndSendRoute(routeType, searchText, messageNumber) {
   // Log the recived data
   console.log('Route type:', routeType);
   console.log('Search text:', searchText);
+  // Convert the search text using the named addresses
+  config.getNamedAddresses().forEach(function(namedAddress) {
+    if (namedAddress.name.toLowerCase() == searchText.toLowerCase()) {
+      searchText = namedAddress.address;
+      console.log('Search text was named address:', searchText);
+    }
+  });
   // Load a route from here api. Data format: { distance, time, stepList[string], stepIconsString }
   locationService.createRoute(routeType, searchText, function(success, data) {
     console.log('Will send:', success, data.stepList.length, data.stepIconsString, messageNumber);

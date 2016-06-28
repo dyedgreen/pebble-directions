@@ -2,9 +2,15 @@
   "name": "pebble-directions",
   "author": "Dyedgreen",
   "version": "1.3.0",
-  "keywords": ["navigation", "maps", "directions"],
+  "keywords": [
+    "navigation",
+    "maps",
+    "directions"
+  ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.1"
+  },
   "pebble": {
     "displayName": "Directions",
     "uuid": "36f93ce6-8a6d-4518-989d-31a7b0458e37",
@@ -15,7 +21,8 @@
       "chalk"
     ],
     "capabilities": [
-      "location"
+      "location",
+      "configurable"
     ],
     "watchapp": {
       "watchface": false,
