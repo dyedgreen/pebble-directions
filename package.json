@@ -1,7 +1,7 @@
 {
   "name": "pebble-directions",
   "author": "Dyedgreen",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "keywords": [
     "navigation",
     "maps",
@@ -35,7 +35,7 @@
       "DISTANCE",
       "TIME",
       "INSTRUCTION_ICONS",
-      "INSTRUCTIONS[20]"
+      "INSTRUCTION_LIST"
     ],
     "resources": {
       "media": [

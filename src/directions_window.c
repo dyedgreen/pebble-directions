@@ -2,7 +2,7 @@
 
 
 #define MESSAGE_PADDING 10
-#define MAX_STEP_COUNT 20
+#define MAX_STEP_COUNT 40
 #define MAX_STEP_CHARS 128
 #define ADDRESS_MAX_CHARS 128
 
@@ -210,18 +210,16 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
     route_data->icons[MAX_STEP_COUNT] = '\0';
   }
 
-  // Test if the recived message is for key INSTRUCTIONS
-  for (int i = 0; i < MAX_STEP_COUNT; i++) {
-    message = dict_find(iter, MESSAGE_KEY_INSTRUCTIONS + i);
-    if (message) {
-      // Set the progress
-      progress_layer_set_progress(progress_layer, PROGRESS_STEP_RECIVED, true);
-      // Copy the string into the string array FIXME
-      strcpy(route_data->steps[i], message->value->cstring);
-      route_data->steps[i][MAX_STEP_CHARS - 1] = '\0';
-      // Store the new length of the RouteDataSteps
-      route_data->count = i + 1;
-    }
+  // Test if the recived message is for key INSTRUCTION_LIST
+  message = dict_find(iter, MESSAGE_KEY_INSTRUCTION_LIST);
+  if (message) {
+    // Set the progress
+    progress_layer_set_progress(progress_layer, PROGRESS_STEP_RECIVED, true);
+    // Copy the string into the string array
+    strcpy(route_data->steps[route_data->count], message->value->cstring);
+    route_data->steps[route_data->count][MAX_STEP_CHARS - 1] = '\0';
+    // Increment the number of recived steps
+    route_data->count += 1;
   }
 }
 

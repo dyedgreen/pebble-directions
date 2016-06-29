@@ -36,7 +36,7 @@
 
 // Data keys
 var keys = require('message_keys');
-var maxStepCount = 20;
+var maxStepCount = 40;
 var maxStepStringLength = 128;
 var currentMessageNumber = 0;
 var messagePadding = 10;
@@ -66,7 +66,7 @@ function sendSuccess(code, messageNumber) {
 
 function sendStepItem(stepList, index, messageNumber) {
   // Build message
-  var key = keys.INSTRUCTIONS + index;
+  var key = keys.INSTRUCTION_LIST;
   var dict = {};
   dict[key] = stepList[index].substr(0, maxStepStringLength);
 
@@ -130,7 +130,7 @@ function fetchAndSendRoute(routeType, searchText, messageNumber) {
   });
   // Load a route from here api. Data format: { distance, time, stepList[string], stepIconsString }
   locationService.createRoute(routeType, searchText, function(success, data) {
-    console.log('Will send:', success, data.stepList.length, data.stepIconsString, messageNumber);
+    console.log('Will send:', success, data.distance, data.time, data.stepList.length, data.stepIconsString, messageNumber);
     sendRoute(success, data.distance, data.time, data.stepList, data.stepIconsString, messageNumber);
   });
 }

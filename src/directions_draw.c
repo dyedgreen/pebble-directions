@@ -40,10 +40,22 @@ int16_t directions_get_cell_height(int16_t window_height, int16_t cell_index) {
 // Draw the title card
 void directions_draw_summary(GContext *ctx, GRect bounds, GColor color, int distance, int time, char *string_address) {
   // Get the strings
-  char string_distance[10];
-  char string_time[10];
-  snprintf(string_distance, sizeof(string_distance), "%i m", distance);
-  snprintf(string_time, sizeof(string_time), "%i min", time);
+  char string_distance[16];
+  char string_time[16];
+  if (distance < 1000) {
+    // Use meters
+    snprintf(string_distance, sizeof(string_distance), "%i m", distance);
+  } else {
+    // Convert to kilometeres with one place after the point
+    snprintf(string_distance, sizeof(string_distance), "%i.%i km", distance / 1000, (distance % 1000) / 100);
+  }
+  if (time < 60) {
+    // Use minutes
+    snprintf(string_time, sizeof(string_time), "%i min", time);
+  } else {
+    // Convert to hours / minutes in the form 1 h 8 min
+    snprintf(string_time, sizeof(string_time), "%i h %i min", time / 60, time % 60);
+  }
 
   // Get the colors
   #ifdef PBL_COLOR
