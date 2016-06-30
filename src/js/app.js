@@ -155,14 +155,17 @@ function startCurrentStepUpdates(stepPositionList) {
   routeData.currentStep = 0;
   // Register the location updates
   routeData.watchId = navigator.geolocation.watchPosition(function(pos) {
-    // New position was recived
-    var lat = pos.coords.latitude;
-    var lon = pos.coords.longitude;
-    var newStep = locationService.getCurrentStepIndex(routeData.stepPositionList, lat, lon, routeData.currentStep);
-    if (newStep != routeData.currentStep) {
-      sendCurrentStep(newStep, true);
-      routeData.currentStep = newStep;
-    }
+    try {
+      // New position was recived
+      var lat = pos.coords.latitude;
+      var lon = pos.coords.longitude;
+      var newStep = locationService.getCurrentStepIndex(routeData.stepPositionList, lat, lon, routeData.currentStep);
+      if (newStep != routeData.currentStep) {
+        sendCurrentStep(newStep, true);
+        routeData.currentStep = newStep;
+        console.log('Location update, new step:', newStep);
+      }
+    } catch (e) {}
   },
   function() {
     // Error while reciving location update

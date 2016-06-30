@@ -39,8 +39,13 @@ function loadCurrentLocation(callback) {
   navigator.geolocation.getCurrentPosition(
     // Success
     function(pos) {
-      //callback(true, 52.5, 13.4); /* THIS IS FOR DEMO / SCREENSHOTS IN THE EMULATOR */
-      callback(true, pos.coords.latitude, pos.coords.longitude);
+      try {
+        //callback(true, 52.5, 13.4); /* THIS IS FOR DEMO / SCREENSHOTS IN THE EMULATOR */
+        callback(true, pos.coords.latitude, pos.coords.longitude);
+      } catch (e) {
+        // No location permission
+        callback(false, 0, 0);
+      }
     },
     // Error
     function() {
@@ -216,8 +221,8 @@ function getApproxDistance(fromLat, fromLon, toLat, toLon) {
 // Determine the current waypoint index, based on a list of waypoint coords [{lat,lon},...], the current position, and the current index
 function getCurrentStepIndex(steps, lat, lon, currentIndex) {
   if (steps instanceof Array && typeof lat === 'number' && typeof lon === 'number' && typeof currentIndex === 'number') {
-    // Test is the distance to the next waypoint is smaller or equal to 10 m
-    if (steps.length > currentIndex + 1 && getApproxDistance(lat, lon, steps[currentIndex + 1].lat, steps[currentIndex + 1].lon) <= 10) {
+    // Test is the distance to the next waypoint is smaller than 30 m
+    if (steps.length > currentIndex + 1 && getApproxDistance(lat, lon, steps[currentIndex + 1].lat, steps[currentIndex + 1].lon) < 30) {
       // Move on to the next waypoint
       return currentIndex + 1;
     } else {

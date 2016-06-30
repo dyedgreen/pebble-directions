@@ -241,8 +241,10 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
 
 // Respond with error, if any data is lost
 static void app_message_inbox_dropped_callback(AppMessageResult reason, void *context) {
-  // Display the network error
-  window_display_error(Network);
+  if (!route_data->complete) {
+    // Display the network error (if the route data is not allready complete)
+    window_display_error(Network);
+  }
 }
 
 // Respond with error, if data can not be send to watch
