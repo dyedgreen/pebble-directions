@@ -42,13 +42,23 @@ void directions_draw_summary(GContext *ctx, GRect bounds, GColor color, int dist
   // Get the strings
   char string_distance[16];
   char string_time[16];
-  if (distance < 1000) {
-    // Use meters
-    snprintf(string_distance, sizeof(string_distance), "%i m", distance);
-  } else {
-    // Convert to kilometeres with one place after the point
-    snprintf(string_distance, sizeof(string_distance), "%i.%i km", distance / 1000, (distance % 1000) / 100);
+  // Disance string
+  switch (health_service_get_measurement_system_for_display(HealthMetricWalkedDistanceMeters)) {
+    // Imperial (miles)
+    case MeasurementSystemImperial:
+      snprintf(string_distance, sizeof(string_distance), "%i.%i mi", distance / 1609, ((distance % 1609) * 10) / 1609);
+      break;
+    // Metric (meters & kilometers)
+    default:
+      if (distance < 1000) {
+        // Use meters
+        snprintf(string_distance, sizeof(string_distance), "%i m", distance);
+      } else {
+        // Convert to kilometeres with one place after the point
+        snprintf(string_distance, sizeof(string_distance), "%i.%i km", distance / 1000, (distance % 1000) / 100);
+      }
   }
+  // Time required string
   if (time < 60) {
     // Use minutes
     snprintf(string_time, sizeof(string_time), "%i min", time);

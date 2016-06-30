@@ -16,6 +16,9 @@
 
 // The RouteData struct
 struct RouteData {
+  // Meta fields
+  bool complete;
+  int current;
   // Data fields
   int distance;
   int time;
@@ -56,6 +59,7 @@ int message_number = -1;
 static void app_message_send_search_data();
 void window_display_error(enum ErrorType err);
 static void window_update_data();
+static void window_update_step();
 
 
 // ******************************
@@ -168,6 +172,7 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
       switch (success_response) {
         // Success
         case 0:
+          route_data->complete = true;
           window_update_data();
           break;
         // Route not found / api error
@@ -221,6 +226,17 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
     // Increment the number of recived steps
     route_data->count += 1;
   }
+
+  // Test if the recived message is for key CURRENT
+  message = dict_find(iter, MESSAGE_KEY_CURRENT);
+  if (message) {
+    // Set the current and update the ui if the data is already complete
+    int new_step = (int)message->value->int32;
+    if (route_data->complete && new_step < route_data->count) {
+      route_data->current = new_step;
+      window_update_step();
+    }
+  }
 }
 
 // Respond with error, if any data is lost
@@ -272,6 +288,9 @@ static void app_message_start() {
   // Set up the data
   route_data = malloc(sizeof(struct RouteData));
 
+  // Set meta values
+  route_data->complete = false;
+  route_data->current = 0;
   // Set initial values
   route_data->distance = 0;
   route_data->time = 0;
@@ -321,6 +340,18 @@ static void window_update_data() {
   menu_layer_reload_data(directions_list);
   // Hide the progress layer
   progress_layer_remove(progress_layer);
+}
+
+// Update the window display to reflrect the new current step and vibrate
+static void window_update_step() {
+  // Update the position of the step list
+  #ifdef PBL_ROUND
+    menu_layer_set_selected_index(directions_list, (MenuIndex){ .section = 0, .row = route_data->current + 1 }, MenuRowAlignCenter, true);
+  #else
+    menu_layer_set_selected_index(directions_list, (MenuIndex){ .section = 0, .row = route_data->current + 1 }, MenuRowAlignTop, true);
+  #endif
+  // Play a short vibration
+  vibes_long_pulse();
 }
 
 // Window unload handler

@@ -27,6 +27,11 @@
 * –––
 * Chars map to the following icons: type: 'a', forward: 'b', right: 'c', left: 'd', uRight: 'e', uLeft: 'f', attr: 'g', final: 'h'
 *
+* About the automatic navigation
+* –––
+* The automatic navigation can be toggled in the settings. If enabled, the JS part will listen to location updates and send the
+* current step-index to the watch in case it changes.
+*
 * About the config of 'named addresses'
 * –––
 * The config stores an array of these name / address pairs, every time a search request hits the phone the
@@ -45,6 +50,12 @@ var messagePadding = 10;
 var locationService = require('./location.js');
 // Configuration
 var config = require('./config.js');
+// Route data
+var routeData = {
+  stepPositionList: [],
+  currentStep: 0,
+  watchId: null,
+};
 
 
 // App Message functions
@@ -116,6 +127,55 @@ function sendRoute(success, distance, time, stepList, stepIconsString, messageNu
   }
 }
 
+// Send the new current index
+function sendCurrentStep(index, shouldRetry) {
+  // Build the message
+  var keyCurrent = keys.CURRENT;
+  var dict = {};
+  dict[keyCurrent] = +index;
+
+  // Transmit
+  Pebble.sendAppMessage(dict, function() {
+    // Success!
+    console.log('Current step send:', index);
+  }, function() {
+    // Error, retry if allowed
+    if (shouldRetry === true) {
+      sendCurrentStep(index, false);
+    } else {
+      console.log('Transmission of current step failed');
+    }
+  });
+}
+
+// Start sending current step information
+function startCurrentStepUpdates(stepPositionList) {
+  // Store the current route data
+  routeData.stepPositionList = stepPositionList;
+  routeData.currentStep = 0;
+  // Register the location updates
+  routeData.watchId = navigator.geolocation.watchPosition(function(pos) {
+    // New position was recived
+    var lat = pos.coords.latitude;
+    var lon = pos.coords.longitude;
+    var newStep = locationService.getCurrentStepIndex(routeData.stepPositionList, lat, lon, routeData.currentStep);
+    if (newStep != routeData.currentStep) {
+      sendCurrentStep(newStep, true);
+      routeData.currentStep = newStep;
+    }
+  },
+  function() {
+    // Error while reciving location update
+    console.log('Error while reciving location update');
+  }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+}
+
+// Stop sending current step information
+function stopCurrentStepUpdates() {
+  // Clear the watch and stop receiving updates
+  navigator.geolocation.clearWatch(routeData.watchId);
+}
+
 // Fetch a route from the here api and send it to the pebble
 function fetchAndSendRoute(routeType, searchText, messageNumber) {
   // Log the recived data
@@ -130,8 +190,14 @@ function fetchAndSendRoute(routeType, searchText, messageNumber) {
   });
   // Load a route from here api. Data format: { distance, time, stepList[string], stepIconsString }
   locationService.createRoute(routeType, searchText, function(success, data) {
+    // Log the route data
     console.log('Will send:', success, data.distance, data.time, data.stepList.length, data.stepIconsString, messageNumber);
+    // Send the route data to the watch
     sendRoute(success, data.distance, data.time, data.stepList, data.stepIconsString, messageNumber);
+    // If the loading was successfull, start watching the position (if enabled in the config)
+    if (success && config.getNavigationSettings().auto) {
+      startCurrentStepUpdates(data.stepPositionList);
+    }
   });
 }
 
@@ -147,5 +213,7 @@ Pebble.addEventListener('appmessage', function(e) {
     currentMessageNumber ++;
     console.log('Message number send:', messageNumber);
     fetchAndSendRoute(dict['SEARCH'].substr(0, 1), dict['SEARCH'].substr(1), messageNumber);
+    // Stop watching the position for automatic step updates if a new search is recived
+    stopCurrentStepUpdates();
   }
 });

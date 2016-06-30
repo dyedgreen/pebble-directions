@@ -111,8 +111,14 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
     url = url.concat('&waypoint0=geo!').concat(fromLat).concat(',').concat(fromLon);
     url = url.concat('&waypoint1=geo!').concat(toLat).concat(',').concat(toLon);
     url = url.concat('&mode=fastest;').concat(modes[routeType]); /* selectes the transit method, e.g. teleportation / car / ... */
+    if (modes[routeType] == 'publicTransport') {
+      // Special url params for public transport routes
+      url = url.concat('&departure=now&combineChange=true');
+    }
     // Format the response
-    url = url.concat('&routeattributes=none,summary,legs&routelegattributes=none,maneuvers&maneuverattributes=none,direction&instructionformat=text');
+    url = url.concat('&routeattributes=none,summary,legs&routelegattributes=none,maneuvers&maneuverattributes=none,direction,position&instructionformat=text');
+    // Log the final url (for rare use)
+    //console.log(url);
   // Perform the request
   makeJsonHttpGetRequest(url, function(success, res) {
     if (success) {
@@ -125,10 +131,16 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
         routeData.time = Math.ceil(res.response.route[0].summary.travelTime / 60); /* in minutes */
         // Get the steps
         routeData.stepList = [];
+        routeData.stepPositionList = [];
         routeData.stepIconsString = '';
         res.response.route[0].leg[0].maneuver.forEach(function(step, index) {
           // Add the text
           routeData.stepList[index] = step.instruction;
+          // Add the position
+          routeData.stepPositionList[index] = {
+            lat: step.position.latitude,
+            lon: step.position.longitude,
+          };
           // Add the icon
           if (res.response.route[0].leg[0].maneuver.length == index + 1) {
             // This is the last step, add the finished icon
@@ -187,9 +199,38 @@ function createRoute(routeType, searchText, callback) {
 }
 // Helper function to define createRoute error callback all in one place
 function routeErrorCallback(callback) {
-  callback(false, { distance: 0, time: 0, stepList: [], stepIconsString: '' });
+  callback(false, { distance: 0, time: 0, stepList: [], stepPositionList: [], stepIconsString: '' });
+}
+
+// Calculates the distance of two sets of coordinates (in meters)
+function getApproxDistance(fromLat, fromLon, toLat, toLon) {
+  var p = 0.017453292519943295;    // Math.PI / 180
+  var c = Math.cos;
+  var a = 0.5 - c((fromLat - toLat) * p)/2 +
+          c(toLat * p) * c(fromLat * p) *
+          (1 - c((fromLon - toLon) * p))/2;
+
+  return 12742000 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371000 m
+}
+
+// Determine the current waypoint index, based on a list of waypoint coords [{lat,lon},...], the current position, and the current index
+function getCurrentStepIndex(steps, lat, lon, currentIndex) {
+  if (steps instanceof Array && typeof lat === 'number' && typeof lon === 'number' && typeof currentIndex === 'number') {
+    // Test is the distance to the next waypoint is smaller or equal to 10 m
+    if (steps.length > currentIndex + 1 && getApproxDistance(lat, lon, steps[currentIndex + 1].lat, steps[currentIndex + 1].lon) <= 10) {
+      // Move on to the next waypoint
+      return currentIndex + 1;
+    } else {
+      // The current waypoint is either the last one or the next one is too far away
+      return currentIndex;
+    }
+  }
+
+  // In case of an error, return 0 or the current index if it is a number
+  return typeof currentIndex === 'number' ? currentIndex : 0;
 }
 
 
 // Exports
 module.exports.createRoute = createRoute;
+module.exports.getCurrentStepIndex = getCurrentStepIndex;
