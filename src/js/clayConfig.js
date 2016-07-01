@@ -9,6 +9,10 @@ module.exports = [
         type: 'heading',
         defaultValue: 'Navigation settings',
       },
+      {
+        type: 'text',
+        defaultValue: 'Tailor the way directions work to your needs and preferences.',
+      },
       // Enable / disable real time navigation
       {
         type: 'toggle',
@@ -159,11 +163,5 @@ module.exports = [
         defaultValue: 'The data is provided by the HERE API (https://developer.here.com).',
       },
     ],
-  },
-
-  // Terminating section
-  {
-    type: 'section',
-    items: [],
   },
 ];

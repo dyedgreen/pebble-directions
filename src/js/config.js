@@ -104,8 +104,8 @@ function getNavigationSettings() {
   try {
     var navigationSettingsData = JSON.parse(localStorage.getItem('navigationSettings'));
     // Automatic turn by turn navigation
-    if (navigationSettingsData.hasOwnProperty('navigationAutoEnable')) {
-      navigationSettings.auto = !!navigationSettingsData.navigationAutoEnable;
+    if (navigationSettingsData.hasOwnProperty('auto')) {
+      navigationSettings.auto = !!navigationSettingsData.auto;
     }
   } catch (e) {}
 
