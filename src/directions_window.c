@@ -232,7 +232,7 @@ static void app_message_inbox_recived_callback(DictionaryIterator *iter, void *c
   if (message) {
     // Set the current and update the ui if the data is already complete
     int new_step = (int)message->value->int32;
-    if (route_data->complete && new_step < route_data->count) {
+    if (route_data->complete && route_data->current != new_step && new_step < route_data->count) {
       route_data->current = new_step;
       window_update_step();
     }
@@ -372,6 +372,7 @@ static void window_unload() {
 
   // Destroy the dictation session
   dictation_session_destroy(dictation_session);
+  dictation_session = NULL;
 
   // Destroy app message stuff
   app_message_resources_destroy();

@@ -211,25 +211,32 @@ function routeErrorCallback(callback) {
 function getApproxDistance(fromLat, fromLon, toLat, toLon) {
   var p = 0.017453292519943295;    // Math.PI / 180
   var c = Math.cos;
-  var a = 0.5 - c((fromLat - toLat) * p)/2 +
-          c(toLat * p) * c(fromLat * p) *
-          (1 - c((fromLon - toLon) * p))/2;
+  var a = 0.5 - c((fromLat - toLat) * p)/2 + c(toLat * p) * c(fromLat * p) * (1 - c((fromLon - toLon) * p))/2;
 
   return 12742000 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371000 m
 }
 
 // Determine the current waypoint index, based on a list of waypoint coords [{lat,lon},...], the current position, and the current index
-function getCurrentStepIndex(steps, lat, lon, currentIndex) {
-  if (steps instanceof Array && typeof lat === 'number' && typeof lon === 'number' && typeof currentIndex === 'number') {
-    // Test is the distance to the next waypoint is smaller than 30 m
-    if (steps.length > currentIndex + 1 && getApproxDistance(lat, lon, steps[currentIndex + 1].lat, steps[currentIndex + 1].lon) < 30) {
-      // Move on to the next waypoint
-      return currentIndex + 1;
-    } else {
-      // The current waypoint is either the last one or the next one is too far away
-      return currentIndex;
-    }
-  }
+function getCurrentStepIndex(steps, lat, lon, accuracy, currentIndex) {
+  // Test if the accuracy is good enought
+  if (accuracy > 50) return currentIndex === 'number' ? currentIndex : 0;
+  // Determine the current step
+  try {
+    // Determine the max distance
+    var maxDistance = 25 + accuracy;
+    // Loop through the steps and find the next one, that is close enought
+    var foundIndex = currentIndex;
+    steps.forEach(function(step, index) {
+      if (index > currentIndex && foundIndex <= currentIndex) {
+        if (getApproxDistance(lat, lon, step.lat, step.lon) <= maxDistance) {
+          // Move on to this waypoint
+          foundIndex = index;
+        }
+      }
+    });
+    // Return the step found
+    return foundIndex;
+  } catch (e) {}
 
   // In case of an error, return 0 or the current index if it is a number
   return typeof currentIndex === 'number' ? currentIndex : 0;

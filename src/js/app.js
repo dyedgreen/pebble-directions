@@ -52,6 +52,7 @@ var locationService = require('./location.js');
 var config = require('./config.js');
 // Route data
 var routeData = {
+  type: 0,
   stepPositionList: [],
   currentStep: 0,
   watchId: null,
@@ -149,27 +150,27 @@ function sendCurrentStep(index, shouldRetry) {
 }
 
 // Start sending current step information
-function startCurrentStepUpdates(stepPositionList) {
+function startCurrentStepUpdates(stepPositionList, routeType) {
   // Store the current route data
   routeData.stepPositionList = stepPositionList;
   routeData.currentStep = 0;
+  routeData.type = routeType;
   // Register the location updates
   routeData.watchId = navigator.geolocation.watchPosition(function(pos) {
     try {
       // New position was recived
       var lat = pos.coords.latitude;
       var lon = pos.coords.longitude;
-      var newStep = locationService.getCurrentStepIndex(routeData.stepPositionList, lat, lon, routeData.currentStep);
+      var accuracy = pos.coords.accuracy;
+      var newStep = locationService.getCurrentStepIndex(routeData.stepPositionList, lat, lon, routeData.type, accuracy, routeData.currentStep);
       if (newStep != routeData.currentStep) {
         sendCurrentStep(newStep, true);
         routeData.currentStep = newStep;
-        console.log('Location update, new step:', newStep);
       }
     } catch (e) {}
   },
   function() {
     // Error while reciving location update
-    console.log('Error while reciving location update');
   }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
 }
 
@@ -199,7 +200,7 @@ function fetchAndSendRoute(routeType, searchText, messageNumber) {
     sendRoute(success, data.distance, data.time, data.stepList, data.stepIconsString, messageNumber);
     // If the loading was successfull, start watching the position (if enabled in the config)
     if (success && config.getNavigationSettings().auto) {
-      startCurrentStepUpdates(data.stepPositionList);
+      startCurrentStepUpdates(data.stepPositionList, routeType);
     }
   });
 }

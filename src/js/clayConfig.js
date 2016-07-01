@@ -15,9 +15,15 @@ module.exports = [
         messageKey: 'navigationAutoEnable',
         label: 'Enable automatic navigation',
         defaultValue: true,
-        description: 'Automatic navigation tells you when to take a turn in real time based on the GPS of your phone. This feature does not require an active internet connection, once the route has been loaded. Disable this feature if you want to reduce battery usage on your phone.',
+        description: 'Automatic navigation tells you when to take the next turn in real time based on the GPS of your phone. Disable this feature if you want to reduce battery usage on your phone or if your phones GPS is not accurate enought and causes problems.',
       },
     ],
+  },
+
+  // Submit / store settings button
+  {
+    type: 'submit',
+    defaultValue: 'Save preferences',
   },
 
   // The named addessses section
@@ -113,7 +119,7 @@ module.exports = [
       },
 
 
-      // Address #4
+      // Address #5
       {
         type: 'input',
         messageKey: 'namedAddressName_4',
@@ -133,20 +139,10 @@ module.exports = [
     ],
   },
 
-  // Support / feedback stuff
+  // Submit / store settings button
   {
-    type: 'section',
-    items: [
-      // Description
-      {
-        type: 'heading',
-        defaultValue: 'Feedback',
-      },
-      {
-        type: 'text',
-        defaultValue: 'To submit your feedback, please use this form: <a href="http://goo.gl/forms/KeN3q0oVqg9h4rWf1">FEEDBACK FORM</a> (save your preferences, before clicking the link).',
-      },
-    ],
+    type: 'submit',
+    defaultValue: 'Save preferences',
   },
 
   // Api attribution stuff
@@ -165,9 +161,9 @@ module.exports = [
     ],
   },
 
-  // The submit / store settings button
+  // Terminating section
   {
-    type: 'submit',
-    defaultValue: 'Save preferences',
+    type: 'section',
+    items: [],
   },
 ];
