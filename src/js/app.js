@@ -150,6 +150,8 @@ function sendCurrentStep(index, shouldRetry) {
 
 // Start sending current step information
 function startCurrentStepUpdates(stepPositionList) {
+  // Log the start of step updates
+  console.log('Current step updates started');
   // Store the current route data
   routeData.stepPositionList = stepPositionList;
   routeData.currentStep = 0;
@@ -174,6 +176,8 @@ function startCurrentStepUpdates(stepPositionList) {
 
 // Stop sending current step information
 function stopCurrentStepUpdates() {
+  // Log the stop of step updates
+  console.log('Current step updates stopped');
   // Clear the watch and stop receiving updates
   navigator.geolocation.clearWatch(routeData.watchId);
 }
@@ -196,8 +200,8 @@ function fetchAndSendRoute(routeType, searchText, messageNumber) {
     console.log('Will send:', success, data.distance, data.time, data.stepList.length, data.stepIconsString, messageNumber);
     // Send the route data to the watch
     sendRoute(success, data.distance, data.time, data.stepList, data.stepIconsString, messageNumber);
-    // If the loading was successfull, start watching the position (if enabled in the config)
-    if (success && config.getNavigationSettings().auto) {
+    // If the loading was successfull, start watching the position if the route type is bike or walk
+    if (success && (routeType == 1 || routeType == 3)) {
       startCurrentStepUpdates(data.stepPositionList);
     }
   });

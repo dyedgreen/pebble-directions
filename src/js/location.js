@@ -223,11 +223,12 @@ function getCurrentStepIndex(steps, lat, lon, accuracy, currentIndex) {
   // Determine the current step
   try {
     // Determine the max distance
-    var maxDistance = 25 + accuracy;
+    var maxDistance = 30 + accuracy;
     // Loop through the steps and find the next one, that is close enought
     var foundIndex = currentIndex;
     steps.forEach(function(step, index) {
-      if (index > currentIndex && foundIndex <= currentIndex) {
+      // Test all upcoming waypoints
+      if (index > currentIndex) {
         if (getApproxDistance(lat, lon, step.lat, step.lon) <= maxDistance) {
           // Move on to this waypoint
           foundIndex = index;

@@ -75,44 +75,6 @@ function getNamedAddresses() {
   return [];
 }
 
-// Store the navigation settings
-function storeNavigationSettings(configDict) {
-  // Settings object with default values
-  var navigationSettings = {
-    auto: true,
-  };
-
-  // Automatic turn by turn navigation
-  if (configDict.hasOwnProperty('navigationAutoEnable')) {
-    navigationSettings.auto = !!configDict.navigationAutoEnable.value;
-  }
-
-  // Store the settings
-  try {
-    localStorage.setItem('navigationSettings', JSON.stringify(navigationSettings));
-  } catch (e) {}
-}
-
-// Get the navigation settings (exposed)
-function getNavigationSettings() {
-  // Settings object with default values
-  var navigationSettings = {
-    auto: true,
-  };
-
-  // Load the settings
-  try {
-    var navigationSettingsData = JSON.parse(localStorage.getItem('navigationSettings'));
-    // Automatic turn by turn navigation
-    if (navigationSettingsData.hasOwnProperty('auto')) {
-      navigationSettings.auto = !!navigationSettingsData.auto;
-    }
-  } catch (e) {}
-
-  // Return the settings
-  return navigationSettings;
-}
-
 
 // Clay things
 var Clay = require('pebble-clay');
@@ -135,10 +97,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
   // Store the addresses returned by the config page
   var configDict = clay.getSettings(e.response, false);
   storeNamedAddresses(configDict);
-  storeNavigationSettings(configDict);
 });
 
 
 // Exports for use in the app.js
 module.exports.getNamedAddresses = getNamedAddresses;
-module.exports.getNavigationSettings = getNavigationSettings;

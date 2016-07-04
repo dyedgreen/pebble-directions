@@ -1,35 +1,5 @@
 // The config page (without the already stored name / addess pairs)
 module.exports = [
-  // Navigation settings
-  {
-    type: 'section',
-    items: [
-      // Description
-      {
-        type: 'heading',
-        defaultValue: 'Navigation settings',
-      },
-      {
-        type: 'text',
-        defaultValue: 'Tailor the way directions work to your needs and preferences.',
-      },
-      // Enable / disable real time navigation
-      {
-        type: 'toggle',
-        messageKey: 'navigationAutoEnable',
-        label: 'Enable automatic navigation',
-        defaultValue: true,
-        description: 'Automatic navigation tells you when to take the next turn in real time based on the GPS of your phone. Disable this feature if you want to reduce battery usage on your phone or if your phones GPS is not accurate enought and causes problems.',
-      },
-    ],
-  },
-
-  // Submit / store settings button
-  {
-    type: 'submit',
-    defaultValue: 'Save preferences',
-  },
-
   // The named addessses section
   {
     type: 'section',
