@@ -5,7 +5,7 @@
 * –––
 * (1) Overview data is send (distance, time needed)
 * (2) Step icon data is send as a 20 char string (each char encodes one icon!)
-* (3) Step data array is send (each step string, max 20 entrys) -> THE LAST SEND INDEX IS THE LENGTH!
+* (3) Step data array is send (each step string, max 40 entrys) -> THE LAST SEND INDEX + 1 IS THE LENGTH!
 * (4) Success value is send (terminates the transmittion; it's true/false
 *   value determines whether the transmition was successfull or not (E.g.
 *   if false is send as the success first, no route was found)
@@ -25,17 +25,19 @@
 *
 * About the step icon data string
 * –––
-* Chars map to the following icons: type: 'a', forward: 'b', right: 'c', left: 'd', uRight: 'e', uLeft: 'f', attr: 'g', final: 'h'
+* Chars map to the following icons:
+* type: 'a', forward: 'b', right: 'c', left: 'd', uRight: 'e', uLeft: 'f', attr: 'g', final: 'h'
 *
 * About the automatic navigation
 * –––
-* The automatic navigation can be toggled in the settings. If enabled, the JS part will listen to location updates and send the
-* current step-index to the watch in case it changes.
+* The automatic navigation is only avilable to certain route types. If enabled, the JS part will
+* listen to location updates and send the current step-index to the watch whenever it changes.
 *
 * About the config of 'named addresses'
 * –––
-* The config stores an array of these name / address pairs, every time a search request hits the phone the
-* recived search string is matched against the names of all entrys and replaced with the addess is a match is found.
+* The config stores an array of these name / address pairs, every time a search request hits the
+* phone the recived search string is matched against the names of all entrys and replaced with the
+* addess if a match is found.
 */
 
 
@@ -163,7 +165,7 @@ function startCurrentStepUpdates(stepPositionList) {
       var lon = pos.coords.longitude;
       var accuracy = pos.coords.accuracy;
       var newStep = locationService.getCurrentStepIndex(routeData.stepPositionList, lat, lon, accuracy, routeData.currentStep);
-      if (newStep != routeData.currentStep) {
+      if (newStep > routeData.currentStep) {
         sendCurrentStep(newStep, true);
         routeData.currentStep = newStep;
       }
