@@ -35,13 +35,20 @@ function makeJsonHttpGetRequest(url, callback, logResponseText) {
 }
 
 // Return the current position to the callback (callback params: success / lat / lon)
-function loadCurrentLocation(callback) {
+function loadCurrentLocation(callback, retry) {
   navigator.geolocation.getCurrentPosition(
     // Success
     function(pos) {
       try {
         //callback(true, 52.5, 13.4); /* THIS IS FOR DEMO / SCREENSHOTS IN THE EMULATOR */
-        callback(true, pos.coords.latitude, pos.coords.longitude);
+        if (pos.coords.accuracy <= 100 || retry !== true) {
+          // Accuracy is good, use this location OR we should not retry!
+          callback(true, pos.coords.latitude, pos.coords.longitude);
+        } else if (retry === true) {
+          // Try once more
+          console.log('Will try to reload current location, accuracy:', pos.coords.accuracy);
+          loadCurrentLocation(callback, false);
+        }
       } catch (e) {
         // No location permission
         callback(false, 0, 0);
@@ -200,7 +207,7 @@ function createRoute(routeType, searchText, callback) {
     } else {
       routeErrorCallback(callback);
     }
-  });
+  }, true);
 }
 // Helper function to define createRoute error callback all in one place
 function routeErrorCallback(callback) {
