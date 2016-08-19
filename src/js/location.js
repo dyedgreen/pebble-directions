@@ -1,6 +1,6 @@
 // Api keys
-var hereAppId = 'O9qHlTv2c773rK1cC7Iw';
-var hereAppCode = 'vjQQRbJewPVjPhPuNZOclQ';
+var hereAppId = require('./apiKeys.js').hereAppId;
+var hereAppCode = require('./apiKeys.js').hereAppCode;
 
 
 // Make a http request and return the recived json to the callback (callback params: success / json)
