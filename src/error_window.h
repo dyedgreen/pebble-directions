@@ -11,8 +11,10 @@ enum ErrorType {
   Api = 1,
   // Error when trying to start the dictation
   Dictation = 2,
+  // Error when a feature is unavailable
+  Unavailable = 3,
   // Something simply went wrong
-  Other = 3
+  Other = 4
 };
 
 void error_window_push(enum ErrorType);

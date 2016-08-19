@@ -268,7 +268,7 @@ static void app_message_send_search_data() {
   // Create a string with the correct length (len is the length w/o the '/0' char)
   const int len = strlen(address) + 1;
   char message[len + 1];
-  // Format the string FIXME (cuts of after 'mee' for the test string ???)
+  // Format the string
   snprintf(message, sizeof(message), "%i%s", selected_type_enum, address);
   // Make sure the string is terminated correctely (just in case)
   message[len] = '\0';
@@ -503,6 +503,13 @@ void directions_window_push() {
 
   // Push window to screen
   window_stack_push(window, true);
+
+  // Display the not available error for transit FIXME: (Find a transit api / re-contact HERE)
+  if (selected_type_enum == Train) {
+    window_display_error(Unavailable);
+    // Abort all other operations in this function
+    return;
+  }
 
   // Start the dictation session
   dictation_session_start_handler();
