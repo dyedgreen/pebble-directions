@@ -1,7 +1,7 @@
 {
   "name": "pebble-directions",
   "author": "Dyedgreen",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "keywords": [
     "navigation",
     "maps",
@@ -40,6 +40,13 @@
     ],
     "resources": {
       "media": [
+        {
+          "file": "images/app.png",
+          "name": "ICON_APP",
+          "targetPlatforms": null,
+          "type": "bitmap",
+          "menuIcon": true
+        },
         {
           "file": "images/car.png",
           "name": "ICON_CAR",

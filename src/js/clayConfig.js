@@ -130,7 +130,7 @@ module.exports = [
       },
       {
         type: 'text',
-        defaultValue: 'The data is provided by the HERE API (https://developer.here.com).',
+        defaultValue: 'The data is provided by the HERE API (https://developer.here.com). Directions for public transit are powered by MapQuest (https://developer.mapquest.com).',
       },
     ],
   },

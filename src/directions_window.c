@@ -504,13 +504,6 @@ void directions_window_push() {
   // Push window to screen
   window_stack_push(window, true);
 
-  // Display the not available error for transit FIXME: (Find a transit api / re-contact HERE)
-  if (selected_type_enum == Train) {
-    window_display_error(Unavailable);
-    // Abort all other operations in this function
-    return;
-  }
-
   // Start the dictation session
   dictation_session_start_handler();
 

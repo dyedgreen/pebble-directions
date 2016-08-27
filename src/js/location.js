@@ -1,6 +1,7 @@
 // Api keys
 var hereAppId = require('./apiKeys.js').hereAppId;
 var hereAppCode = require('./apiKeys.js').hereAppCode;
+var mapQuestKey = require('./apiKeys.js').mapQuestKey;
 
 
 // Make a http request and return the recived json to the callback (callback params: success / json)
@@ -188,6 +189,108 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
   });
 }
 
+// Load a route from the MapQuest PublicTransit API
+function loadPublicTransitRouteData(fromLat, fromLon, toLat, toLon, callback) {
+  // Pebble direction icons, mapped to pebble ids (type = show nav type icon, attr = show attribution icon)
+  var icons = {
+    type: 'a',
+    forward: 'b',
+    right: 'c',
+    left: 'd',
+    uRight: 'e',
+    uLeft: 'f',
+    attr: 'g',
+    final: 'h',
+  };
+  // Maps the direction retrived from here api to icon name (-1 == final)
+  var directionMap = [
+    'forward',
+    'right',
+    'right',
+    'right',
+    'uRight',
+    'left',
+    'left',
+    'left',
+    'uRight',
+    'uLeft',
+    'right',
+    'left',
+    'right',
+    'left',
+    'right',
+    'left',
+    'right',
+    'left',
+    'forward',
+    'type',
+    'type',
+    'type',
+    'type'
+  ];
+
+  // Create the url
+  var url = 'http://www.mapquestapi.com/directions/v2/route?key=';
+    url = url.concat(mapQuestKey);
+    url = url.concat('&from=').concat(fromLat).concat(',').concat(fromLon);
+    url = url.concat('&to=').concat(toLat).concat(',').concat(toLon);
+    url = url.concat('&routeType=multimodal&maxWalkingDistance=500&timeType=1')
+    // Format the response
+    url = url.concat('&unit=k&doReverseGeocode=false&narrativeType=text&locale=en_US&outFormat=json');
+    // Log the final url (for rare use)
+    //console.log(url);
+  // Perform the request
+  makeJsonHttpGetRequest(url, function(success, res) {
+    if (success) {
+      // Success (will fail if expected fields are not available in response)
+      try {
+        // Our route data will go here. Format: { distance, time, stepList[string], stepIconsString[int] }
+        var routeData = {};
+        // Get the summary
+        routeData.distance = Math.ceil(res.route.distance * 1000); /* in meters */
+        routeData.time = Math.ceil(res.route.time / 60); /* in minutes */
+        // Get the steps
+        routeData.stepList = [];
+        routeData.stepPositionList = [];
+        routeData.stepIconsString = '';
+        res.route.legs[0].maneuvers.forEach(function(step, index) {
+          // Add the text
+          routeData.stepList[index] = step.narrative;
+          // Add the position
+          routeData.stepPositionList[index] = {
+            lat: step.startPoint.lat,
+            lon: step.startPoint.lng,
+          };
+          // Add the icon
+          if (res.route.legs[0].maneuvers.length == index + 1) {
+            // This is the last step, add the finished icon
+            routeData.stepIconsString = routeData.stepIconsString.concat(icons['final']);
+          } else if (step.hasOwnProperty('turnType')) {
+            // Display the specified icon
+            if (directionMap.length > step.turnType) {
+              routeData.stepIconsString = routeData.stepIconsString.concat(icons[directionMap[step.turnType]]);
+            } else {
+              // Display the travel type icon
+              routeData.stepIconsString = routeData.stepIconsString.concat(icons['type']);
+            }
+          } else {
+            // Display the travel type icon
+            routeData.stepIconsString = routeData.stepIconsString.concat(icons['type']);
+          }
+        });
+        // We are done
+        callback(true, routeData);
+      } catch (e) {
+        console.log(e);
+        routeErrorCallback(callback);
+      }
+    } else {
+      // Error
+      routeErrorCallback(callback);
+    }
+  });
+}
+
 // Performs all the steps neccessary to return a complete route (the callback takes: success / route data)
 function createRoute(routeType, searchText, callback) {
   // Load the current location
@@ -198,8 +301,12 @@ function createRoute(routeType, searchText, callback) {
       loadLocationForSearch(searchText, fromLat, fromLon, function(successSearchLocation, toLat, toLon) {
         console.log('search found:', toLat, toLon);
         if (successSearchLocation) {
-          // Load a route and pass it the callback
-          loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback);
+          // Load a route and pass it the callback (uses different api for public transit)
+          if (routeType != 2) {
+            loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback);
+          } else {
+            loadPublicTransitRouteData(fromLat, fromLon, toLat, toLon, callback);
+          }
         } else {
           routeErrorCallback(callback);
         }
