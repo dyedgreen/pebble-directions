@@ -1,5 +1,7 @@
 # Pebble Directions
 
+## _[!! now maintained for the rebble store here !!](https://github.com/Kuchenm0nster/pebble-directions)_
+
 ![Pebble Appstore Banner](./banner.png)
 
 A simple directions app for the now discontinued Pebble smartwatch. Users could select their method of transport
