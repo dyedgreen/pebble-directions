@@ -18,7 +18,8 @@
     "enableMultiJS": true,
     "targetPlatforms": [
       "basalt",
-      "chalk"
+      "chalk",
+      "diorite"
     ],
     "capabilities": [
       "location",
