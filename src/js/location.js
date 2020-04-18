@@ -1,6 +1,5 @@
 // Api keys
-var hereAppId = require('./apiKeys.js').hereAppId;
-var hereAppCode = require('./apiKeys.js').hereAppCode;
+var hereApiKey = require('./apiKeys.js').hereApiKey;
 var mapQuestKey = require('./apiKeys.js').mapQuestKey;
 
 
@@ -67,9 +66,8 @@ function loadCurrentLocation(callback, retry) {
 // Load a geolocation from here and return the found lon/lat to the callback (callback params: success / lat / lon)
 function loadLocationForSearch(searchText, currentLat, currentLon, callback) {
   // Create the url
-  var url = 'https://geocoder.api.here.com/6.2/geocode.json?app_id=';
-    url = url.concat(hereAppId);
-    url = url.concat('&app_code=').concat(hereAppCode);
+  var url = 'https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=';
+    url = url.concat(hereApiKey);
     url = url.concat('&gen=9'); /*don't break on here api update*/
     url = url.concat('&searchtext=').concat(encodeURI(searchText.split(' ').join('+')));
     url = url.concat('&prox=').concat(currentLat).concat(',').concat(currentLon).concat(',50000'); /* favour results within 50 km range */
@@ -117,9 +115,8 @@ function loadRouteData(routeType, fromLat, fromLon, toLat, toLon, callback) {
   };
 
   // Create the url
-  var url = 'https://route.api.here.com/routing/7.2/calculateroute.json?app_id=';
-    url = url.concat(hereAppId);
-    url = url.concat('&app_code=').concat(hereAppCode);
+  var url = 'https://route.ls.hereapi.com/routing/7.2/calculateroute.json?apiKey=';
+    url = url.concat(hereApiKey);
     url = url.concat('&gen=9'); /*don't break on here api update*/
     url = url.concat('&waypoint0=geo!').concat(fromLat).concat(',').concat(fromLon);
     url = url.concat('&waypoint1=geo!').concat(toLat).concat(',').concat(toLon);
